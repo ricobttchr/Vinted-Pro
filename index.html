@@ -1,10 +1,10 @@
-```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VintedPro - Ultimate Seller OS</title>
+    <title>VintedPro v18 - Flohmarkt Edition</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -15,9 +15,7 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: { vinted: { 50: '#faf5ff', 100: '#f3e8ff', 200: '#e9d5ff', 300: '#d8b4fe', 400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 700: '#7e22ce', 800: '#6b21a8', 900: '#581c87' } },
-                    boxShadow: { 'card': '0 8px 30px rgba(0,0,0,0.04)', 'inner-light': 'inset 0 2px 4px 0 rgba(0,0,0,0.02)', 'floating': '0 20px 25px -5px rgba(0,0,0,0.1)' },
-                    animation: { 'fade-in': 'fadeIn 0.4s ease-out forwards', 'slide-up': 'slideUp 0.5s ease-out forwards', 'slide-in-right': 'slideInRight 0.4s ease-out forwards' },
-                    keyframes: { fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } }, slideUp: { '0%': { opacity: 0, transform: 'translateY(20px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } }, slideInRight: { '0%': { opacity: 0, transform: 'translateX(30px)' }, '100%': { opacity: 1, transform: 'translateX(0)' } } }
+                    boxShadow: { 'card': '0 8px 30px rgba(0, 0, 0, 0.04), 0 4px 10px rgba(0, 0, 0, 0.02)', 'floating': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }
                 }
             }
         }
@@ -28,125 +26,127 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { background-color: #f4f5f7; color: #111827; overflow: hidden; -webkit-tap-highlight-color: transparent; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        *:focus-visible { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #d8b4fe; }
-        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #9333ea; cursor: pointer; margin-top: -8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #e5e7eb; border-radius: 4px; }
+        .glass-effect { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #9333ea; margin-top: -7px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-runnable-track { height: 6px; background: #e5e7eb; border-radius: 4px; }
     </style>
 </head>
-<body class="h-screen w-screen font-sans text-gray-900">
+<body>
     <div id="root" class="h-full w-full"></div>
     <script type="text/babel">
-        const { useState, useEffect, createContext, useContext, Component } = React;
+        const { useState, useEffect, createContext, useContext, Component, useMemo } = React;
 
-        // 1. ROBUST PARSING & ERROR BOUNDARY
+        // Sicherer Parser für KI-Antworten
+        const safeJsonParse = (text) => {
+            try {
+                const match = text.match(/\{[\s\S]*\}/);
+                return JSON.parse(match ? match[0] : text);
+            } catch (e) {
+                console.error("JSON Parsing Error:", e);
+                throw new Error("Die KI hat ein ungültiges Format geliefert. Bitte erneut versuchen.");
+            }
+        };
+
         const parsePrice = (val) => {
             if (!val) return 0;
             if (typeof val === 'number') return isNaN(val) ? 0 : val;
-            const num = parseFloat(String(val).replace(/[^\d.,-]/g, '').replace(',', '.'));
+            const cleaned = String(val).replace(/[^\d.,-]/g, '').replace(',', '.');
+            const num = parseFloat(cleaned);
             return isNaN(num) ? 0 : num;
         };
 
         class ErrorBoundary extends Component {
-            constructor(props) { super(props); this.state = { hasError: false, error: null }; }
-            static getDerivedStateFromError(error) { return { hasError: true, error }; }
+            constructor(props) { super(props); this.state = { hasError: false }; }
+            static getDerivedStateFromError(error) { return { hasError: true }; }
             render() {
                 if (this.state.hasError) return (
-                    <div className="h-screen w-screen flex flex-col items-center justify-center bg-gray-50 p-8 text-center">
-                        <i className="fa-solid fa-shield-cat text-6xl text-red-500 mb-6"></i>
-                        <h1 className="text-3xl font-extrabold mb-2">System Error Guard</h1>
-                        <p className="text-gray-500 mb-6">Crash abgefangen. Bitte Cache leeren.</p>
-                        <p className="text-xs text-red-400 mb-6 max-w-lg">{String(this.state.error)}</p>
-                        <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-gray-900 text-white font-bold py-4 px-8 rounded-2xl"><i className="fa-solid fa-rotate-right mr-2"></i> Cache leeren & Neustarten</button>
+                    <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
+                        <i className="fa-solid fa-triangle-exclamation text-5xl text-amber-500 mb-4"></i>
+                        <h1 className="text-2xl font-bold">Ups! Etwas lief schief.</h1>
+                        <button onClick={() => window.location.reload()} className="mt-4 bg-gray-900 text-white px-6 py-3 rounded-2xl font-bold">Neu laden</button>
                     </div>
                 );
                 return this.props.children; 
             }
         }
 
-        // 2. CONFIG & API
         const API_KEY = "AIzaSyBIcM5Tr0Z0FNTLObfQnJGmoY0JkqGblew";
         const VINTED_DATA = {
-            categories: ["Damenbekleidung", "Herrenbekleidung", "Sneaker & Schuhe", "Vintage & Y2K", "Taschen", "Kinder & Baby", "Home & Deko", "Elektronik", "Sonstiges"],
+            categories: ["Damenbekleidung", "Herrenbekleidung", "Sneaker & Schuhe", "Vintage & Y2K", "Taschen & Accessoires", "Kinder & Baby", "Home & Deko", "Elektronik", "Sonstiges"],
             conditions: ["Neu mit Etikett", "Neu ohne Etikett", "Sehr gut", "Gut", "Zufriedenstellend"],
-            colors: ["Schwarz", "Weiß", "Grau", "Blau", "Rot", "Grün", "Gelb", "Braun", "Beige", "Lila", "Pink", "Mehrfarbig"],
-            materials: ["Nicht angegeben", "100% Baumwolle", "Polyester", "Leder", "Seide", "Leinen", "Wolle", "Denim", "Mischgewebe"],
-            carriers: ["DHL", "Hermes", "GLS", "DPD"]
+            colors: ["Schwarz", "Weiß", "Grau", "Blau", "Rot", "Grün", "Gelb", "Braun", "Beige", "Lila", "Pink", "Gold", "Silber", "Mehrfarbig"],
+            materials: ["Nicht angegeben", "100% Baumwolle", "Polyester", "Leder", "Kunstleder", "Seide", "Leinen", "Wolle", "Denim", "Mischgewebe"],
+            carriers: ["DHL", "Hermes", "GLS", "DPD", "PostAT"]
         };
 
-        const fileToBase64 = (file) => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => res({ mimeType: file.type, data: r.result.split(',')[1] }); r.onerror = rej; });
+        const fileToBase64 = (file) => new Promise((res, rej) => {
+            const r = new FileReader(); r.readAsDataURL(file);
+            r.onload = () => res({ mimeType: file.type, data: r.result.split(',')[1] });
+            r.onerror = rej;
+        });
 
-        const callGemini = async (prompt, images = [], customModel) => {
-            if (!navigator.onLine) throw new Error("Kein Internet! Prüfe deinen Empfang auf dem Flohmarkt.");
-            const models = [customModel || 'gemini-1.5-flash', 'gemini-flash-latest'];
-            let lastErr = null;
-            for (const model of models) {
-                try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`, {
-                        method: "POST", headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, ...images.map(img => ({ inlineData: { mimeType: img.mimeType, data: img.data } }))] }], generationConfig: { responseMimeType: "application/json" } })
-                    });
-                    if (!res.ok) { if (res.status === 429) { await new Promise(r => setTimeout(r, 2000)); continue; } throw new Error(`HTTP ${res.status}`); }
-                    const data = await res.json();
-                    if(!data?.candidates?.[0]?.content) throw new Error("Leere KI-Antwort.");
-                    let text = data.candidates[0].content.parts[0].text;
-                    const match = text.match(/\{[\s\S]*\}/);
-                    return JSON.parse(match ? match[0] : text);
-                } catch (e) { lastErr = e; }
+        const callGemini = async (prompt, images = [], model = "gemini-1.5-flash") => {
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }, ...images.map(img => ({ inlineData: { mimeType: img.mimeType, data: img.data } }))] }],
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+                if (!res.ok) throw new Error(`KI-Dienst nicht erreichbar (${res.status})`);
+                const data = await res.json();
+                return safeJsonParse(data.candidates[0].content.parts[0].text);
+            } catch (e) {
+                throw new Error(e.message);
             }
-            throw new Error(`KI-Server überlastet. ${lastErr?.message}`);
         };
 
-        // 3. STATE MANAGEMENT
         const AppContext = createContext(null);
         const AppProvider = ({ children }) => {
             const [toasts, setToasts] = useState([]);
             const useStickyState = (def, key) => {
                 const [val, setVal] = useState(() => {
-                    try {
-                        const s = window.localStorage.getItem(key);
-                        if (s) { const p = JSON.parse(s); if(Array.isArray(def)) return Array.isArray(p)?p.filter(Boolean):def; return typeof p==='object'&&p!==null?{...def,...p}:p; }
-                    } catch (e) { window.localStorage.removeItem(key); }
-                    return def;
+                    const s = window.localStorage.getItem(key);
+                    return s ? JSON.parse(s) : def;
                 });
-                useEffect(() => { try { window.localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }, [key, val]);
+                useEffect(() => { window.localStorage.setItem(key, JSON.stringify(val)); }, [key, val]);
                 return [val, setVal];
             };
 
-            const [listings, setListings] = useStickyState([], 'vpro_listings_v20');
-            const [alerts, setAlerts] = useStickyState([], 'vpro_alerts_v20');
-            const [routeStops, setRouteStops] = useStickyState([], 'vpro_routes_v20');
-            const [settings, setSettings] = useStickyState({ userName: 'Rico', signature: 'LG Rico 😁', apiModel: 'gemini-1.5-flash' }, 'vpro_settings_v20');
+            const [listings, setListings] = useStickyState([], 'vpro_listings_v18');
+            const [alerts, setAlerts] = useStickyState([], 'vpro_alerts_v18');
+            const [routeStops, setRouteStops] = useStickyState([], 'vpro_routes_v18');
+            const [settings, setSettings] = useStickyState({ userName: 'Rico', signature: 'LG Rico 😁', apiModel: 'gemini-1.5-flash' }, 'vpro_settings_v18');
 
-            const addToast = (msg, type = 'success') => { const id = Date.now(); setToasts(p => [...p, { id, msg, type }]); setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000); };
+            const addToast = (msg, type = 'success') => {
+                const id = Date.now();
+                setToasts(p => [...p, { id, msg, type }]);
+                setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 3000);
+            };
+
             const actions = {
-                addListing: (l) => setListings(p => [l, ...(Array.isArray(p)?p.filter(Boolean):[])]),
-                updateListing: (id, u) => setListings(p => (Array.isArray(p)?p.filter(Boolean):[]).map(l => l?.id === id ? { ...l, ...u } : l)),
-                deleteListing: (id) => setListings(p => (Array.isArray(p)?p.filter(Boolean):[]).filter(l => l?.id !== id)),
-                addAlert: (a) => setAlerts(p => [{...a, id: Date.now()}, ...(Array.isArray(p)?p.filter(Boolean):[])]),
-                deleteAlert: (id) => setAlerts(p => (Array.isArray(p)?p.filter(Boolean):[]).filter(a => a?.id !== id)),
-                addRouteStop: (carrier) => setRouteStops(p => [...(Array.isArray(p)?p.filter(Boolean):[]), { id: Date.now(), carrier, notes: '' }]),
-                updateRouteStop: (id, notes) => setRouteStops(p => (Array.isArray(p)?p.filter(Boolean):[]).map(s => s?.id === id ? {...s, notes} : s)),
-                deleteRouteStop: (id) => setRouteStops(p => (Array.isArray(p)?p.filter(Boolean):[]).filter(s => s?.id !== id)),
-                clearRoute: () => setRouteStops([]),
-                updateSettings: (u) => setSettings(p => ({...(p||{}), ...u})),
-                exportData: () => { try { const blob = new Blob([JSON.stringify({ listings: listings.filter(Boolean), alerts: alerts.filter(Boolean), routeStops: routeStops.filter(Boolean), settings }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `VintedPro_Backup.json`; a.click(); URL.revokeObjectURL(a.href); addToast("Export erfolgreich!"); } catch(e){ addToast("Fehler beim Export", "error"); } },
-                importData: (jd) => { try { if(jd.listings) setListings(jd.listings.filter(Boolean)); if(jd.alerts) setAlerts(jd.alerts.filter(Boolean)); if(jd.routeStops) setRouteStops(jd.routeStops.filter(Boolean)); if(jd.settings) setSettings(p => ({...p, ...jd.settings})); addToast("Importiert! Lade neu..."); setTimeout(() => window.location.reload(), 1500); } catch(e) { addToast("Defekte Datei", "error"); } }
+                addListing: (l) => setListings(p => [l, ...p]),
+                updateListing: (id, u) => setListings(p => p.map(l => l.id === id ? { ...l, ...u } : l)),
+                deleteListing: (id) => setListings(p => p.filter(l => l.id !== id)),
+                addAlert: (a) => setAlerts(p => [{...a, id: Date.now()}, ...p]),
+                deleteAlert: (id) => setAlerts(p => p.filter(a => a.id !== id)),
+                addRouteStop: (carrier) => setRouteStops(p => [...p, { id: Date.now(), carrier, notes: '' }]),
+                updateRouteStop: (id, notes) => setRouteStops(p => p.map(s => s.id === id ? {...s, notes} : s)),
+                deleteRouteStop: (id) => setRouteStops(p => p.filter(s => s.id !== id)),
+                updateSettings: (u) => setSettings(p => ({...p, ...u}))
             };
 
             return (
-                <AppContext.Provider value={{ listings: Array.isArray(listings)?listings.filter(Boolean):[], alerts: Array.isArray(alerts)?alerts.filter(Boolean):[], routeStops: Array.isArray(routeStops)?routeStops.filter(Boolean):[], settings: settings||{}, actions, addToast }}>
+                <AppContext.Provider value={{ listings, alerts, routeStops, settings, actions, addToast }}>
                     {children}
-                    <div className="fixed bottom-6 right-6 z-[999] flex flex-col gap-3 pointer-events-none">
+                    <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
                         {toasts.map(t => (
-                            <div key={t.id} className="animate-slide-up bg-white/95 px-5 py-4 rounded-2xl shadow-floating flex items-center gap-4 pointer-events-auto border-l-4 w-80" style={{borderLeftColor: t.type === 'error' ? '#ef4444' : t.type === 'warning' ? '#f59e0b' : '#10b981'}}>
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${t.type === 'error' ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-500'}`}><i className={`fa-solid ${t.type === 'error' ? 'fa-xmark' : 'fa-check'}`}></i></div>
-                                <p className="font-bold text-sm text-gray-900">{t.msg}</p>
+                            <div key={t.id} className="animate-slide-up glass-effect bg-white/95 px-5 py-4 rounded-2xl shadow-floating pointer-events-auto border-l-4 w-72" style={{borderLeftColor: t.type === 'error' ? '#ef4444' : '#10b981'}}>
+                                <p className="font-bold text-sm">{t.msg}</p>
                             </div>
                         ))}
                     </div>
@@ -155,19 +155,25 @@
         };
         const useAppContext = () => useContext(AppContext);
 
-        // 4. UI COMPONENTS
-        const Card = ({ children, className = "", noPadding = false, onClick }) => <div onClick={onClick} className={`bg-white rounded-3xl shadow-card border border-gray-100 overflow-hidden ${onClick ? 'cursor-pointer hover:-translate-y-1 transition-transform' : ''} ${noPadding ? '' : 'p-6 md:p-8'} ${className}`}>{children}</div>;
-        const Button = ({ children, onClick, variant = 'primary', icon, loading = false, className = "", disabled = false, size="md" }) => {
-            const v = { primary: "bg-gray-900 hover:bg-black text-white", vinted: "bg-vinted-600 hover:bg-vinted-700 text-white", secondary: "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200", danger: "bg-red-50 hover:bg-red-100 text-red-600" };
+        // UI Komponenten
+        const Card = ({ children, className = "", noPadding = false, onClick }) => (
+            <div onClick={onClick} className={`bg-white rounded-3xl shadow-card border border-gray-100 overflow-hidden ${onClick ? 'cursor-pointer active:scale-[0.98] transition-all' : ''} ${noPadding ? '' : 'p-6'} ${className}`}>{children}</div>
+        );
+        const Button = ({ children, onClick, variant = 'primary', icon, loading = false, className = "", size="md" }) => {
+            const v = { primary: "bg-gray-900 text-white", vinted: "bg-vinted-600 text-white", secondary: "bg-gray-100 text-gray-700", danger: "bg-red-50 text-red-600" };
             const s = { sm: "py-2 px-4 text-xs rounded-xl", md: "py-3 px-6 text-sm rounded-2xl", lg: "py-4 px-8 text-base rounded-2xl" };
-            return <button onClick={onClick} disabled={disabled || loading} className={`relative flex items-center justify-center font-bold transition-all active:scale-95 disabled:opacity-60 shadow-sm ${v[variant]} ${s[size]} ${className}`}>{loading ? <i className="fa-solid fa-circle-notch fa-spin text-lg"></i> : <span className="flex items-center gap-2">{icon && <i className={`fa-solid ${icon}`}></i>} <span>{children}</span></span>}</button>;
+            return (
+                <button onClick={onClick} disabled={loading} className={`flex items-center justify-center font-bold transition-all active:scale-95 disabled:opacity-50 ${v[variant]} ${s[size]} ${className}`}>
+                    {loading ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <><i className={`fa-solid ${icon} ${children ? 'mr-2' : ''}`}></i>{children}</>}
+                </button>
+            );
         };
         const Input = ({ label, type="text", value, onChange, placeholder, icon, multiline=false, rows=4, className="", disabled=false, list }) => (
             <div className={`flex flex-col gap-1.5 ${className}`}>
                 {label && <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1">{label}</label>}
                 <div className="relative group">
                     {icon && <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><i className={`fa-solid ${icon}`}></i></div>}
-                    {multiline ? <textarea rows={rows} value={value} onChange={onChange} disabled={disabled} placeholder={placeholder} className={`block w-full rounded-2xl border border-gray-200 bg-gray-50/50 p-3.5 sm:text-sm resize-none outline-none focus:bg-white focus:border-vinted-500 ${icon?'pl-11':''} ${disabled?'opacity-50':''}`}></textarea> : <input type={type} value={value} onChange={onChange} disabled={disabled} placeholder={placeholder} list={list} className={`block w-full rounded-2xl border border-gray-200 bg-gray-50/50 p-3.5 sm:text-sm outline-none focus:bg-white focus:border-vinted-500 ${icon?'pl-11':''} ${disabled?'opacity-50':''}`} />}
+                    {multiline ? <textarea rows={rows} value={value} onChange={onChange} disabled={disabled} placeholder={placeholder} className={`block w-full rounded-2xl border border-gray-200 bg-gray-50/50 p-3.5 sm:text-sm resize-none outline-none focus:bg-white focus:border-vinted-500 ${icon?'pl-11':''}`}></textarea> : <input type={type} value={value} onChange={onChange} disabled={disabled} placeholder={placeholder} list={list} className={`block w-full rounded-2xl border border-gray-200 bg-gray-50/50 p-3.5 sm:text-sm outline-none focus:bg-white focus:border-vinted-500 ${icon?'pl-11':''}`} />}
                 </div>
             </div>
         );
@@ -181,10 +187,10 @@
                 </div>
             </div>
         );
-
-        // ==========================================
-        // 5. MODULE / VIEWS
-        // ==========================================
+        const Badge = ({ children, color = 'gray', className = "" }) => {
+            const c = { gray: "bg-gray-100 text-gray-700", amber: "bg-amber-50 text-amber-700" };
+            return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold border border-black/5 ${c[color]||c.gray} ${className}`}>{children}</span>;
+        };
 
         // --- DASHBOARD ---
         const Dashboard = ({ setView }) => {
@@ -192,40 +198,38 @@
             const active = listings.filter(l => l?.status === 'active');
             const sold = listings.filter(l => l?.status === 'sold');
             const revenue = sold.reduce((acc, curr) => acc + parsePrice(curr?.price), 0);
-            const activeValue = active.reduce((acc, curr) => acc + parsePrice(curr?.price), 0);
-            const recent = [...listings].sort((a,b) => new Date(b?.date || 0) - new Date(a?.date || 0)).slice(0, 4);
+            const recent = [...listings].slice(0, 4);
 
             return (
-                <div className="p-6 lg:p-12 max-w-[1600px] mx-auto h-full overflow-y-auto animate-fade-in pb-32">
+                <div className="p-6 lg:p-12 max-w-[1600px] mx-auto h-full overflow-y-auto pb-32">
                     <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
-                        <div><h1 className="text-4xl font-extrabold text-gray-900">Übersicht</h1><p className="text-gray-500 mt-2 font-medium">Willkommen zurück, {settings?.userName || 'Rico'}.</p></div>
+                        <div><h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Übersicht</h1><p className="text-gray-500 mt-2 font-medium">Moin, {settings?.userName || 'Rico'}! Lass uns Geld verdienen.</p></div>
                         <Button variant="vinted" onClick={()=>setView('analyze')} icon="fa-plus" size="lg">Neues Inserat</Button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
-                        <Card className="flex flex-col justify-between p-6"><div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4"><i className="fa-solid fa-boxes-stacked text-xl"></i></div><p className="text-sm font-bold text-gray-500">Aktiv im Store</p><h3 className="text-3xl font-black">{active.length} <span className="text-sm font-medium text-gray-400">({activeValue.toFixed(0)}€)</span></h3></Card>
+                        <Card className="flex flex-col justify-between p-6"><div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4"><i className="fa-solid fa-boxes-stacked text-xl"></i></div><p className="text-sm font-bold text-gray-500">Aktiv im Store</p><h3 className="text-3xl font-black">{active.length}</h3></Card>
                         <Card className="flex flex-col justify-between p-6"><div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mb-4"><i className="fa-solid fa-handshake text-xl"></i></div><p className="text-sm font-bold text-gray-500">Verkauft</p><h3 className="text-3xl font-black">{sold.length}</h3></Card>
                         <Card className="flex flex-col justify-between p-6"><div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4"><i className="fa-solid fa-box-archive text-xl"></i></div><p className="text-sm font-bold text-gray-500">Inventar gesamt</p><h3 className="text-3xl font-black">{listings.length}</h3></Card>
                         <Card className="flex flex-col justify-between bg-gray-900 text-white p-6"><div className="w-12 h-12 rounded-2xl bg-gray-800 text-white border border-gray-700 flex items-center justify-center mb-4"><i className="fa-solid fa-sack-dollar text-xl"></i></div><p className="text-sm font-bold text-gray-400">Gesamtumsatz</p><h3 className="text-3xl font-black">{revenue.toFixed(2)} €</h3></Card>
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <Card className="p-8"><h3 className="text-xl font-extrabold text-gray-900 mb-6">Quick Tools für den Flohmarkt</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button onClick={()=>setView('dealchecker')} className="p-6 rounded-2xl bg-white hover:shadow-md border border-gray-200 text-left active:scale-95 transition-all"><i className="fa-solid fa-bolt text-amber-500 mb-2 text-3xl"></i><p className="font-bold text-gray-900 mt-2">Flohmarkt Check</p><p className="text-xs text-gray-500 mt-1">Blitz-Analyse am Stand</p></button>
+                                <button onClick={()=>setView('sniper')} className="p-6 rounded-2xl bg-white hover:shadow-md border border-gray-200 text-left active:scale-95 transition-all"><i className="fa-solid fa-crosshairs text-red-500 mb-2 text-3xl"></i><p className="font-bold text-gray-900 mt-2">Snipe Radar</p><p className="text-xs text-gray-500 mt-1">Marken überwachen</p></button>
+                            </div>
+                        </Card>
                         <Card className="flex flex-col p-8">
-                            <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-extrabold text-gray-900">Letzte Aktivitäten</h3></div>
+                            <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-extrabold text-gray-900">Letzte Aktivitäten</h3><Button variant="secondary" size="sm" onClick={()=>setView('history')}>Alle ansehen</Button></div>
                             <div className="space-y-4">
                                 {recent.map((item, i) => (
                                     <div key={item.id||i} className="flex items-center gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.status==='sold'?'bg-green-100 text-green-600':'bg-vinted-100 text-vinted-600'}`}><i className={`fa-solid ${item.status==='sold'?'fa-check':'fa-sparkles'}`}></i></div>
-                                        <div className="flex-1 min-w-0"><p className="font-bold text-gray-900 truncate">{item.title}</p><p className="text-xs font-bold text-gray-500">{item.status==='sold'?'Verkauft':'Gelistet'}</p></div>
-                                        <p className="font-black">{parsePrice(item.price).toFixed(2)} €</p>
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${item.status === 'sold' ? 'bg-green-100 text-green-600' : 'bg-vinted-100 text-vinted-600'}`}><i className={`fa-solid ${item.status === 'sold' ? 'fa-check' : 'fa-sparkles'}`}></i></div>
+                                        <div className="flex-1 min-w-0"><p className="font-bold text-gray-900 truncate">{item.title}</p><p className="text-xs font-bold text-gray-500">{item.status === 'sold' ? 'Verkauft' : 'Gelistet'}</p></div>
+                                        <p className="font-black text-gray-900">{parsePrice(item.price).toFixed(2)} €</p>
                                     </div>
                                 ))}
-                                {recent.length === 0 && <p className="text-gray-400 text-center py-10">Keine Aktivitäten.</p>}
-                            </div>
-                        </Card>
-                        <Card className="p-8">
-                            <h3 className="text-xl font-extrabold text-gray-900 mb-6">Quick Tools</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <button onClick={()=>setView('sniper')} className="p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 border border-gray-200 text-left"><i className="fa-solid fa-crosshairs text-red-500 mb-2 text-2xl"></i><p className="font-bold">Snipe Radar</p></button>
-                                <button onClick={()=>setView('shipping')} className="p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 border border-gray-200 text-left"><i className="fa-solid fa-route text-blue-500 mb-2 text-2xl"></i><p className="font-bold">Routenplaner</p></button>
+                                {recent.length===0 && <p className="text-center text-gray-400 py-10">Keine Einträge. Geh auf den Flohmarkt! ;)</p>}
                             </div>
                         </Card>
                     </div>
@@ -233,139 +237,85 @@
             );
         };
 
-        // --- ANALYZE STUDIO (INKLUSIVE VINTED DIRECT UPLOAD) ---
+        // --- ANALYZE STUDIO ---
         const AnalyzeStudio = () => {
             const { actions, addToast, settings } = useAppContext();
             const [step, setStep] = useState(1);
             const [files, setFiles] = useState([]);
             const [loading, setLoading] = useState(false);
             const [result, setResult] = useState(null);
-            
-            const [data, setData] = useState({ category: VINTED_DATA.categories[0], condition: VINTED_DATA.conditions[2], color: VINTED_DATA.colors[0], material: VINTED_DATA.materials[0], brand: "", style: "Detailliert", pricingStrategy: "Optimistisch", deepAnalysis: false });
-
-            const handleDrop = (e) => { e.preventDefault(); const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')); if(dropped.length) setFiles(p => [...p, ...dropped]); };
+            const [data, setData] = useState({ category: VINTED_DATA.categories[0], condition: VINTED_DATA.conditions[2], brand: "" });
 
             const runAnalysis = async () => {
                 setLoading(true); setStep(3);
                 try {
                     const b64s = []; for(let f of files) b64s.push(await fileToBase64(f));
-
-                    const styleInstruction = data.style === 'Detailliert'
-                        ? `Schreibe ausführlich, locker. Starte mit "Moin! 👋". Beende mit der Signatur: "${settings?.signature || ''}" und Privatverkauf-Hinweis.`
-                        : `Schreibe extrem kurz, präzise im Stichpunkt-Stil. Keine Begrüßung.`;
-                    
-                    const priceInstruction = data.pricingStrategy === 'Pessimistisch' ? `Rechne pessimistisch (Quick Flip, untere Marktgrenze).` : `Rechne optimistisch auf maximalen Profit.`;
-                    const deepJson = data.deepAnalysis ? `"detailed_price_breakdown": { "lowest": 15, "highest": 40, "avg_time": "1-2 Wochen", "factors": ["Marke"], "deep_analysis": "Ausführliche Marktanalyse..." }` : `"detailed_price_breakdown": null`;
-
-                    const prompt = `Vinted SEO-Experte. Analysiere Angebot: Kat: ${data.category}, Zust: ${data.condition}, Marke: ${data.brand||'-'}, Farbe: ${data.color}, Mat: ${data.material}.
-                    Copywriting-Stil: ${styleInstruction}. Pricing-Strategie: ${priceInstruction}.
-                    GIB NUR JSON ZURÜCK: { "title": "SEO Titel", "description": "Text exakt nach Vorgabe", "suggested_price": 25, "price_rationale": "Begründung", ${deepJson}, "image_score": "8/10", "image_tips": "Tipps", "selling_tips": "Tipp", "hashtags": "#tags" }`;
+                    const prompt = `Du bist ein Vinted-Experte. Analysiere das Bild. Kat: ${data.category}, Zust: ${data.condition}, Marke: ${data.brand||'-'}. Schreibe einen Verkaufstext im lockeren Stil, starte mit "Moin!". Beende ihn mit: "${settings?.signature || ''}" und Privatverkauf-Hinweis.
+                    GIB NUR DIESES JSON ZURÜCK: { "title": "SEO-Titel max 60Z", "description": "Fertiger Text", "suggested_price": 25 }`;
 
                     const parsed = await callGemini(prompt, b64s, settings?.apiModel);
                     setResult(parsed);
                     
-                    actions.addListing({ id: Date.now().toString(), title: parsed.title, description: parsed.description, price: parsePrice(parsed.suggested_price), buy_price: 0, status: 'active', shipping_status: 'pack', date: new Date().toISOString(), category: data.category, condition: data.condition, brand: data.brand });
-                    addToast("Im Inventar gespeichert!", "success");
-                    setStep(4);
+                    actions.addListing({ id: Date.now().toString(), title: parsed.title, description: parsed.description, price: parsePrice(parsed.suggested_price), buy_price: 0, status: 'active', date: new Date().toISOString() });
+                    addToast("Analyse erfolgreich!"); setStep(4);
                 } catch (e) { addToast(e.message, "error"); setStep(2); } finally { setLoading(false); }
             };
 
-            const directUpload = () => {
-                if(!result) return;
-                const text = `${result.title}\n\n${result.description}\n\n${Array.isArray(result.hashtags)?result.hashtags.join(' '):result.hashtags}\n\nPreis: ${parsePrice(result.suggested_price)}€`;
-                navigator.clipboard.writeText(text);
-                addToast("Titel & Text kopiert! Öffne Vinted...", "success");
-                setTimeout(() => window.open('https://www.vinted.de/items/new', '_blank'), 800);
-            };
-
             return (
-                <div className="p-6 lg:p-12 max-w-5xl mx-auto h-full overflow-y-auto animate-fade-in no-scrollbar pb-32">
-                    <div className="text-center mb-10"><h1 className="text-4xl font-extrabold">AI Listing Studio</h1><p className="text-gray-500 mt-2">In 4 Schritten zum perfekten Vinted-Inserat.</p></div>
+                <div className="p-6 lg:p-12 max-w-5xl mx-auto h-full overflow-y-auto pb-32">
+                    <div className="text-center mb-10"><h1 className="text-4xl font-extrabold text-gray-900">Analyse Studio</h1></div>
                     
-                    <div className="max-w-2xl mx-auto mb-12 relative flex items-center justify-between">
-                        <div className="absolute w-full h-1.5 bg-gray-200 z-0"></div><div className="absolute h-1.5 bg-vinted-500 transition-all z-0" style={{width: `${((step-1)/3)*100}%`}}></div>
-                        {[1, 2, 3, 4].map(n => <div key={n} className={`w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold z-10 bg-white ${step >= n ? 'border-vinted-500 text-vinted-600' : 'border-gray-200 text-gray-400'}`}>{step > n ? <i className="fa-solid fa-check"></i> : n}</div>)}
-                    </div>
-
                     <div className="max-w-3xl mx-auto">
                         {step === 1 && (
                             <Card className="p-8 md:p-14 text-center">
-                                <h2 className="text-3xl font-extrabold mb-8">Artikelfotos</h2>
-                                <div onDragOver={e=>e.preventDefault()} onDrop={handleDrop} className="border-2 border-dashed border-gray-300 rounded-3xl bg-gray-50 hover:bg-gray-100 p-12 cursor-pointer">
-                                    <input type="file" multiple accept="image/*" onChange={(e) => setFiles(p => [...p, ...Array.from(e.target.files)])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                                    <i className="fa-solid fa-cloud-arrow-up text-5xl text-gray-400 mb-4"></i><h3 className="font-bold text-gray-900 text-lg">Bilder hier ablegen</h3>
+                                <h2 className="text-2xl font-extrabold mb-8">Artikelfotos hochladen</h2>
+                                <div className="border-2 border-dashed border-vinted-300 rounded-3xl bg-vinted-50 hover:bg-vinted-100 transition-all p-12 cursor-pointer relative">
+                                    <input type="file" multiple accept="image/*" onChange={(e) => setFiles([...files, ...Array.from(e.target.files)])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                    <i className="fa-solid fa-camera text-5xl text-vinted-400 mb-4"></i><h3 className="font-bold text-vinted-900 text-lg">Tippen oder Bilder ablegen</h3>
                                 </div>
-                                {files.length > 0 && <div className="mt-8 grid grid-cols-4 gap-4">{files.map((f, i) => <div key={i} className="aspect-square rounded-2xl overflow-hidden relative border border-gray-200"><img src={URL.createObjectURL(f)} className="w-full h-full object-cover" /><button onClick={()=>setFiles(files.filter((_, idx)=>idx!==i))} className="absolute top-1 right-1 bg-white/90 p-1 text-red-500 rounded"><i className="fa-solid fa-xmark text-xs"></i></button></div>)}</div>}
-                                <div className="mt-10 flex justify-end"><Button onClick={()=>setStep(2)} disabled={files.length===0} size="lg">Weiter</Button></div>
+                                {files.length > 0 && <div className="mt-6 flex justify-end"><Button onClick={()=>setStep(2)} size="lg">Weiter</Button></div>}
                             </Card>
                         )}
                         {step === 2 && (
                             <Card className="p-8 md:p-12">
-                                <h2 className="text-2xl font-extrabold mb-8">Metadaten & Setup</h2>
+                                <h2 className="text-2xl font-extrabold mb-8">Kurze Infos</h2>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                                     <Select label="Kategorie" value={data.category} onChange={e=>setData({...data, category: e.target.value})} options={VINTED_DATA.categories} icon="fa-layer-group" />
                                     <Select label="Zustand" value={data.condition} onChange={e=>setData({...data, condition: e.target.value})} options={VINTED_DATA.conditions} icon="fa-star" />
-                                    <Select label="Farbe" value={data.color} onChange={e=>setData({...data, color: e.target.value})} options={VINTED_DATA.colors} icon="fa-palette" />
-                                    <Select label="Material" value={data.material} onChange={e=>setData({...data, material: e.target.value})} options={VINTED_DATA.materials} icon="fa-scissors" />
-                                    <Input className="sm:col-span-2" label="Marke" value={data.brand} onChange={e=>setData({...data, brand: e.target.value})} icon="fa-copyright" placeholder="Extrem wichtig für den Preis!" />
+                                    <Input className="sm:col-span-2" label="Marke" value={data.brand} onChange={e=>setData({...data, brand: e.target.value})} icon="fa-copyright" placeholder="Optional" />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4 mb-6">
-                                    <div onClick={()=>setData({...data, style: 'Detailliert'})} className={`p-4 rounded-2xl border-2 cursor-pointer ${data.style==='Detailliert'?'border-vinted-500':'border-gray-200'}`}><p className="font-bold">Ausführlicher Text</p></div>
-                                    <div onClick={()=>setData({...data, style: 'Kurz'})} className={`p-4 rounded-2xl border-2 cursor-pointer ${data.style==='Kurz'?'border-vinted-500':'border-gray-200'}`}><p className="font-bold">Kurz & Knapp</p></div>
+                                <div className="flex justify-between pt-6">
+                                    <Button variant="secondary" onClick={()=>setStep(1)}>Zurück</Button>
+                                    <Button onClick={runAnalysis} variant="vinted" icon="fa-wand-magic-sparkles">Magie starten</Button>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4 mb-8">
-                                    <div onClick={()=>setData({...data, pricingStrategy: 'Pessimistisch'})} className={`p-4 rounded-2xl border-2 cursor-pointer ${data.pricingStrategy==='Pessimistisch'?'border-blue-500':'border-gray-200'}`}><p className="font-bold">Pessimistischer Preis</p><p className="text-xs text-gray-500 mt-1">Für schnellen Verkauf</p></div>
-                                    <div onClick={()=>setData({...data, pricingStrategy: 'Optimistisch'})} className={`p-4 rounded-2xl border-2 cursor-pointer ${data.pricingStrategy==='Optimistisch'?'border-blue-500':'border-gray-200'}`}><p className="font-bold">Optimistischer Preis</p><p className="text-xs text-gray-500 mt-1">Für max. Profit</p></div>
-                                </div>
-                                <div className="mb-10 p-5 bg-gray-900 rounded-2xl flex justify-between items-center cursor-pointer" onClick={()=>setData({...data, deepAnalysis: !data.deepAnalysis})}>
-                                    <div><h4 className="font-bold text-white"><i className="fa-solid fa-chart-pie text-vinted-400 mr-2"></i> Deep Market Research</h4><p className="text-xs text-gray-400">Berechnet Marktspanne & Werttreiber.</p></div>
-                                    <div className={`w-12 h-6 rounded-full relative ${data.deepAnalysis ? 'bg-vinted-500' : 'bg-gray-700'}`}><div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${data.deepAnalysis ? 'left-7' : 'left-1'}`}></div></div>
-                                </div>
-                                <div className="flex justify-between pt-8 border-t border-gray-100"><Button variant="secondary" onClick={()=>setStep(1)} size="lg">Zurück</Button><Button onClick={runAnalysis} variant="primary" icon="fa-wand-magic-sparkles" size="lg">Analyse starten</Button></div>
                             </Card>
                         )}
-
                         {step === 3 && (
                             <div className="py-32 text-center">
                                 <i className="fa-solid fa-circle-notch fa-spin text-6xl text-vinted-600 mb-6"></i>
-                                <h2 className="text-3xl font-extrabold mb-3">KI berechnet Listing</h2>
+                                <h2 className="text-3xl font-bold">KI generiert das perfekte Listing...</h2>
                             </div>
                         )}
-
                         {step === 4 && result && (
                             <div className="space-y-6">
-                                <Card className="p-6 bg-vinted-600 text-white flex justify-between items-center">
-                                    <div><h2 className="text-xl font-bold"><i className="fa-solid fa-rocket"></i> Listing fertig!</h2></div>
-                                    <Button onClick={directUpload} className="!bg-white !text-vinted-700" icon="fa-arrow-up-right-from-square">Direkt bei Vinted einstellen</Button>
-                                </Card>
-
                                 <Card noPadding>
-                                    <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center"><span className="text-xs font-bold text-gray-500 uppercase">Titel</span><Button variant="ghost" size="sm" onClick={()=>navigator.clipboard.writeText(result.title)}>Kopieren</Button></div>
-                                    <div className="p-6 text-xl font-black">{result.title}</div>
+                                    <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center"><span className="font-bold text-xs text-gray-500 uppercase">Titel</span></div>
+                                    <div className="p-6 font-black text-xl">{result.title}</div>
                                 </Card>
-
                                 <Card noPadding>
-                                    <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center"><span className="text-xs font-bold text-gray-500 uppercase">Text</span><Button variant="ghost" size="sm" onClick={()=>navigator.clipboard.writeText(result.description)}>Kopieren</Button></div>
-                                    <div className="p-6"><p className="whitespace-pre-wrap font-medium">{result.description}</p><p className="mt-4 font-bold text-vinted-600">{Array.isArray(result.hashtags)?result.hashtags.join(' '):result.hashtags}</p></div>
+                                    <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center"><span className="font-bold text-xs text-gray-500 uppercase">Text</span></div>
+                                    <div className="p-6 whitespace-pre-wrap text-sm font-medium">{result.description}</div>
                                 </Card>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {result.detailed_price_breakdown ? (
-                                        <Card className="p-8 bg-gray-900 text-white md:col-span-2">
-                                            <p className="text-xs font-bold text-vinted-400 uppercase mb-4">Mega-Preisanalyse</p>
-                                            <div className="grid grid-cols-3 gap-4 mb-6">
-                                                <div><p className="text-xs text-gray-500 uppercase mb-1">Low</p><p className="text-2xl font-bold">{parsePrice(result.detailed_price_breakdown.lowest).toFixed(2)}€</p></div>
-                                                <div className="text-center"><p className="text-xs text-vinted-400 uppercase mb-1">Empfohlen</p><p className="text-5xl font-black text-vinted-400">{parsePrice(result.suggested_price).toFixed(2)}€</p></div>
-                                                <div className="text-right"><p className="text-xs text-gray-500 uppercase mb-1">High</p><p className="text-2xl font-bold">{parsePrice(result.detailed_price_breakdown.highest).toFixed(2)}€</p></div>
-                                            </div>
-                                            <p className="bg-gray-800 p-4 rounded-xl text-sm leading-relaxed">{result.detailed_price_breakdown.deep_analysis}</p>
-                                        </Card>
-                                    ) : (
-                                        <Card className="p-8 bg-gray-900 text-white"><p className="text-xs text-gray-400 uppercase mb-2">Marktwert</p><h3 className="text-5xl font-black text-vinted-400 mb-4">{parsePrice(result.suggested_price).toFixed(2)}€</h3><p className="text-sm">{result.price_rationale}</p></Card>
-                                    )}
-                                    <Card className="p-6"><p className="text-xs text-gray-500 uppercase mb-2">Foto-Score</p><Badge color="amber">{result.image_score}</Badge><p className="text-sm mt-4">{result.image_tips}</p></Card>
+                                <Card className="p-6 bg-gray-900 text-white text-center"><p className="text-xs text-gray-400 uppercase mb-2">Empfohlener Preis</p><h3 className="text-5xl font-black text-vinted-400">{parsePrice(result.suggested_price).toFixed(2)} €</h3></Card>
+                                
+                                <div className="pt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <Button variant="secondary" onClick={()=>{setStep(1); setFiles([]); setResult(null);}} size="lg">Neues Listing</Button>
+                                    <Button variant="vinted" icon="fa-arrow-up-right-from-square" size="lg" onClick={()=>{
+                                        navigator.clipboard.writeText(`${result.title}\n\n${result.description}`); 
+                                        window.open('https://www.vinted.de/items/new', '_blank'); 
+                                        addToast('Text kopiert! Vinted öffnet sich...');
+                                    }}>Direkt auf Vinted einstellen</Button>
                                 </div>
-                                <div className="pt-6 text-center"><Button variant="secondary" onClick={()=>{setStep(1); setFiles([]); setResult(null);}} size="lg" className="mx-auto">Neues Listing</Button></div>
                             </div>
                         )}
                     </div>
@@ -373,147 +323,74 @@
             );
         };
 
-        // --- INVENTORY (MIT MANUELLER EINGABE) ---
-        const Inventory = ({ setView }) => {
-            const { listings, actions, addToast } = useAppContext();
-            const [search, setSearch] = useState('');
-            const [filter, setFilter] = useState('all');
-            const [showManual, setShowManual] = useState(false);
-            const [m, setM] = useState({ title: '', price: '', category: VINTED_DATA.categories[8], condition: VINTED_DATA.conditions[2] });
-
-            const filtered = listings.filter(l => {
-                if (!l) return false; 
-                const matchS = (l.title||'').toLowerCase().includes(search.toLowerCase());
-                const matchF = filter === 'all' || l.status === filter;
-                return matchS && matchF;
-            });
-
-            const handleManualAdd = () => {
-                if(!m.title) return addToast("Titel fehlt!", "warning");
-                actions.addListing({ id: Date.now().toString(), title: m.title, price: parsePrice(m.price), category: m.category, condition: m.condition, status: 'active', shipping_status: 'pack', date: new Date().toISOString(), buy_price: 0 });
-                setShowManual(false); setM({title: '', price: '', category: VINTED_DATA.categories[8], condition: VINTED_DATA.conditions[2]}); addToast("Hinzugefügt!", "success");
-            };
-
+        // --- INVENTORY ---
+        const Inventory = () => {
+            const { listings, actions } = useAppContext();
             return (
-                <div className="p-6 lg:p-12 max-w-7xl mx-auto h-full overflow-y-auto pb-32 relative">
-                    <div className="mb-10 flex justify-between items-end"><h1 className="text-4xl font-extrabold text-gray-900">Inventar</h1></div>
-                    
-                    <Card className="flex flex-col h-[600px] p-0">
-                        <div className="p-6 border-b border-gray-100 bg-white flex flex-col sm:flex-row gap-4">
-                            <Input value={search} onChange={e=>setSearch(e.target.value)} icon="fa-magnifying-glass" placeholder="Suchen..." className="flex-1" />
-                            <div className="flex gap-3 shrink-0"><Select value={filter} onChange={e=>setFilter(e.target.value)} options={["all", "active", "sold", "paused"]} className="w-48" /><Button variant="primary" onClick={()=>setShowManual(true)} icon="fa-plus"></Button></div>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-0 bg-gray-50/30">
-                            <table className="w-full text-left border-collapse">
-                                <thead className="bg-white sticky top-0 shadow-xs border-b"><tr><th className="px-8 py-5 text-[10px] text-gray-400 uppercase">Artikel</th><th className="px-8 py-5 text-[10px] text-gray-400 uppercase w-32">Preis</th><th className="px-8 py-5 text-[10px] text-gray-400 uppercase w-40">Status</th><th className="px-8 py-5 text-[10px] text-gray-400 uppercase w-24 text-right">Aktion</th></tr></thead>
-                                <tbody>
-                                    {filtered.map(item => (
-                                        <tr key={item.id} className="border-b border-gray-100 hover:bg-white transition-colors">
-                                            <td className="px-8 py-5"><div className="flex items-center gap-4"><div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400"><i className="fa-regular fa-image"></i></div><div><p className="font-bold text-gray-900">{item.title}</p><p className="text-[10px] text-gray-500 mt-1">{item.category}</p></div></div></td>
-                                            <td className="px-8 py-5 font-black text-gray-900">{parsePrice(item.price).toFixed(2)} €</td>
-                                            <td className="px-8 py-5">
-                                                <select value={item.status} onChange={e => actions.updateListing(item.id, {status: e.target.value})} className="bg-transparent font-bold text-xs outline-none cursor-pointer"><option value="active">Aktiv</option><option value="paused">Pausiert</option><option value="sold">Verkauft</option></select>
-                                            </td>
-                                            <td className="px-8 py-5 text-right"><button onClick={()=>{if(confirm('Löschen?')) actions.deleteListing(item.id);}} className="text-gray-400 hover:text-red-500 p-2"><i className="fa-solid fa-trash"></i></button></td>
-                                        </tr>
-                                    ))}
-                                    {filtered.length === 0 && <tr><td colSpan="4"><EmptyState icon="fa-box-open" title="Keine Artikel" description="Füge Artikel manuell oder per KI hinzu." action={<Button onClick={()=>setView('analyze')}>Zur KI Analyse</Button>} /></td></tr>}
-                                </tbody>
-                            </table>
-                        </div>
+                <div className="p-6 lg:p-12 max-w-7xl mx-auto h-full overflow-y-auto pb-32">
+                    <h1 className="text-4xl font-extrabold mb-10">Dein Inventar</h1>
+                    <Card className="p-0 overflow-hidden">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-gray-50 border-b"><tr><th className="p-4 text-xs font-bold uppercase text-gray-500">Artikel</th><th className="p-4 text-xs font-bold uppercase text-gray-500">Preis</th><th className="p-4 text-xs font-bold uppercase text-gray-500">Status</th><th className="p-4 text-xs"></th></tr></thead>
+                            <tbody>
+                                {listings.map(item => (
+                                    <tr key={item.id} className="border-b hover:bg-gray-50">
+                                        <td className="p-4 font-bold text-sm">{item.title}</td>
+                                        <td className="p-4 font-black">{parsePrice(item.price).toFixed(2)} €</td>
+                                        <td className="p-4"><select value={item.status} onChange={e => actions.updateListing(item.id, {status: e.target.value})} className="bg-transparent font-bold text-sm outline-none cursor-pointer"><option value="active">Aktiv</option><option value="sold">Verkauft</option></select></td>
+                                        <td className="p-4 text-right"><button onClick={()=>actions.deleteListing(item.id)} className="text-red-500 p-2 hover:bg-red-50 rounded-lg"><i className="fa-solid fa-trash"></i></button></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </Card>
-
-                    {showManual && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
-                            <Card className="w-full max-w-lg relative border-none">
-                                <button onClick={()=>setShowManual(false)} className="absolute top-6 right-6 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"><i className="fa-solid fa-xmark"></i></button>
-                                <h2 className="text-2xl font-extrabold mb-6">Manuell Hinzufügen</h2>
-                                <div className="space-y-4 mb-8">
-                                    <Input label="Titel" value={m.title} onChange={e=>setM({...m, title: e.target.value})} placeholder="z.B. Hose" />
-                                    <div className="grid grid-cols-2 gap-4"><Input label="Preis (€)" type="number" value={m.price} onChange={e=>setM({...m, price: e.target.value})} placeholder="25" /><Select label="Zustand" value={m.condition} onChange={e=>setM({...m, condition: e.target.value})} options={VINTED_DATA.conditions} /></div>
-                                    <Select label="Kategorie" value={m.category} onChange={e=>setM({...m, category: e.target.value})} options={VINTED_DATA.categories} />
-                                </div>
-                                <Button onClick={handleManualAdd} className="w-full" size="lg" icon="fa-check">Speichern</Button>
-                            </Card>
-                        </div>
-                    )}
                 </div>
             );
         };
 
-        // --- DEAL CHECKER PRO ---
+        // --- DEAL CHECKER (Flohmarkt Modus) ---
         const DealChecker = () => {
             const { addToast, settings } = useAppContext();
-            const [links, setLinks] = useState("");
-            const [files, setFiles] = useState([]);
+            const [query, setQuery] = useState("");
             const [purchasePrice, setPurchasePrice] = useState("");
-            const [isFree, setIsFree] = useState(false);
-            const [margin, setMargin] = useState(40);
             const [loading, setLoading] = useState(false);
             const [result, setResult] = useState(null);
 
-            const handleDrop = (e) => { e.preventDefault(); const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')); if(dropped.length) setFiles(p => [...p, ...dropped]); };
-
             const handleCheck = async () => {
-                if(!links.trim() && files.length === 0) return addToast("Bitte Text oder Bilder einfügen.", "warning");
+                if(!query) return addToast("Was gucken wir uns an?", "error");
                 setLoading(true); setResult(null);
                 try {
-                    const b64s = []; for(let f of files) b64s.push(await fileToBase64(f));
-                    const priceInfo = isFree ? `Zu verschenken (0 €)` : (purchasePrice ? `${purchasePrice} €` : `Nicht angegeben`);
-                    const prompt = `Analysiere diesen Deal: ${links || 'Bilder'}. Preis: ${priceInfo}. Ziel-Netto-Marge: ${margin}%. Berücksichtige Fahrt/Verpackung (3€).
-                    GIB AUSSCHLIESSLICH DIESES JSON ZURÜCK: { "item_name": "Genaue Bezeichnung", "demand_level": "Hoch/Mittel/Niedrig", "estimated_sell_price": 50, "calculated_profit": 15.50, "max_buy_price": 25.00, "roi_percent": 30, "risk_assessment": "Hoch/Mittel/Niedrig", "worth_it": true, "deep_analysis": "Begründung", "action_steps": ["Schritt"], "red_flags": ["Worauf achten?"], "negotiation_msg": "Text für Verkäufer" }`;
-                    const res = await callGemini(prompt, b64s, settings?.apiModel);
+                    const prompt = `Du bist ein knallharter Reseller auf einem Flohmarkt. Analysiere dieses Item kurz und präzise: "${query}". Ankaufspreis: ${purchasePrice||0}€. GIB NUR JSON: {"item_name":"Name", "estimated_sell_price":50, "max_buy_price":20, "worth_it":true, "quick_advice":"Ein kurzer Satz ob sich das lohnt oder worauf man achten muss beim Zustand"}`;
+                    const res = await callGemini(prompt, [], settings?.apiModel);
                     setResult(res);
                 } catch(e) { addToast(e.message, "error"); } finally { setLoading(false); }
             };
 
             return (
-                <div className="p-6 lg:p-12 max-w-[1600px] mx-auto h-full overflow-y-auto pb-32">
-                    <h1 className="text-4xl font-extrabold mb-10">Deal Checker Pro</h1>
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                        <div className="space-y-6">
-                            <Card className="p-8">
-                                <h2 className="text-lg font-bold mb-4">1. Deal Details</h2>
-                                <Input multiline rows={3} placeholder="Link oder Text..." value={links} onChange={e=>setLinks(e.target.value)} icon="fa-link" />
-                                <div className="mt-6 border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50 p-6 text-center cursor-pointer relative" onDragOver={e=>e.preventDefault()} onDrop={handleDrop}>
-                                    <input type="file" multiple accept="image/*" onChange={(e) => setFiles(p => [...p, ...Array.from(e.target.files)])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                                    <i className="fa-solid fa-camera-retro text-2xl text-gray-400 mb-2"></i><p className="text-xs font-bold text-gray-600">Screenshots hier ablegen</p>
-                                </div>
-                                {files.length > 0 && <div className="mt-4 flex gap-3 overflow-x-auto">{files.map((f, i) => <div key={i} className="w-12 h-12 rounded-lg overflow-hidden relative border border-gray-200"><img src={URL.createObjectURL(f)} className="w-full h-full object-cover" /><button onClick={()=>setFiles(files.filter((_, idx)=>idx!==i))} className="absolute top-0 right-0 bg-white/90 p-1 text-red-500"><i className="fa-solid fa-xmark text-[10px]"></i></button></div>)}</div>}
-                            </Card>
-                            <Card className="p-8">
-                                <h2 className="text-lg font-bold mb-4">2. Kalkulation</h2>
-                                <div className="flex items-center gap-3 mb-6 p-4 bg-vinted-50 rounded-xl cursor-pointer" onClick={()=>setIsFree(!isFree)}><div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${isFree ? 'bg-vinted-600 border-vinted-600 text-white' : 'bg-white'}`}>{isFree && <i className="fa-solid fa-check text-[10px]"></i>}</div><span className="font-bold text-vinted-900">Zu verschenken (0 €)</span></div>
-                                <div className="grid grid-cols-2 gap-6 mb-8"><Input label="Preis (€)" type="number" value={purchasePrice} onChange={e=>setPurchasePrice(e.target.value)} disabled={isFree} /><div><label className="text-[11px] font-bold text-gray-500 uppercase block mb-2">Marge</label><div className="bg-gray-50 rounded-xl p-3 flex justify-between"><input type="range" min="10" max="100" step="5" value={margin} onChange={e=>setMargin(Number(e.target.value))} className="w-2/3" /><span className="font-bold text-vinted-600">{margin}%</span></div></div></div>
-                                <Button onClick={handleCheck} loading={loading} className="w-full" size="lg">Analysieren</Button>
-                            </Card>
+                <div className="p-6 lg:p-12 max-w-4xl mx-auto h-full overflow-y-auto pb-32">
+                    <h1 className="text-4xl font-extrabold mb-2 text-gray-900">Flohmarkt Radar</h1>
+                    <p className="text-gray-500 font-medium mb-10">Blitzschnelle Entscheidungshilfe direkt am Stand.</p>
+                    
+                    <Card className="p-6 mb-8 bg-gray-900">
+                        <div className="space-y-4">
+                            <Input label="Was hast du vor dir?" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Z.B. Vintage Nike Sweater 90s" />
+                            <Input label="Soll kosten (€)" type="number" value={purchasePrice} onChange={e=>setPurchasePrice(e.target.value)} placeholder="Preis am Stand" />
+                            <Button onClick={handleCheck} loading={loading} variant="vinted" size="lg" className="w-full mt-4" icon="fa-bolt">Lohnt sich das?</Button>
                         </div>
-                        <div className="min-h-[500px]">
-                            {loading && <Card className="h-full flex items-center justify-center"><i className="fa-solid fa-circle-notch fa-spin text-5xl text-vinted-600"></i></Card>}
-                            {result && !loading && (
-                                <Card className={`h-full flex flex-col border-t-8 ${result.worth_it ? 'border-t-green-500' : 'border-t-red-500'}`}>
-                                    <div className="p-4 flex-1 overflow-y-auto no-scrollbar">
-                                        <div className="flex justify-between items-start mb-6">
-                                            <div><h2 className={`text-4xl font-black ${result.worth_it ? 'text-green-600' : 'text-red-600'}`}>{result.worth_it ? 'Zuschlagen! 👍' : 'Finger weg! 🛑'}</h2><p className="font-bold mt-2">{result.item_name}</p></div>
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-4 mb-6 text-center">
-                                            <div className="bg-gray-50 p-4 rounded-xl"><p className="text-[10px] font-bold text-gray-500 uppercase">Est. Wert</p><p className="text-xl font-black">{parsePrice(result.estimated_sell_price).toFixed(2)}€</p></div>
-                                            <div className="bg-gray-50 p-4 rounded-xl"><p className="text-[10px] font-bold text-gray-500 uppercase">Max Ankauf</p><p className="text-xl font-black">{result.max_buy_price}€</p></div>
-                                            <div className="bg-green-50 p-4 rounded-xl text-green-800"><p className="text-[10px] font-bold uppercase">Gewinn</p><p className="text-xl font-black">{parsePrice(result.calculated_profit).toFixed(2)}€</p></div>
-                                        </div>
-                                        <div className="space-y-6">
-                                            <div><h3 className="font-bold mb-2">Marktanalyse</h3><p className="text-sm bg-gray-50 p-4 rounded-xl">{result.deep_analysis}</p></div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="bg-blue-50 p-4 rounded-xl"><h3 className="font-bold text-blue-800 text-xs mb-2">Action Plan</h3><ul className="text-xs text-blue-900 space-y-1">{Array.isArray(result.action_steps) ? result.action_steps.map((s,i)=><li key={i}>{i+1}. {s}</li>) : <li>{result.action_steps}</li>}</ul></div>
-                                                <div className="bg-red-50 p-4 rounded-xl"><h3 className="font-bold text-red-800 text-xs mb-2">Red Flags</h3><ul className="text-xs text-red-900 space-y-1">{Array.isArray(result.red_flags) ? result.red_flags.map((f,i)=><li key={i}>- {f}</li>) : <li>{result.red_flags}</li>}</ul></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Card>
-                            )}
-                            {!result && !loading && <EmptyState icon="fa-scale-balanced" title="Deal Checker" description="Füge Daten ein, um Deals knallhart zu kalkulieren." />}
-                        </div>
-                    </div>
+                    </Card>
+
+                    {result && !loading && (
+                        <Card className={`border-l-8 ${result.worth_it ? 'border-l-green-500' : 'border-l-red-500'} p-8 text-center animate-slide-up`}>
+                            <i className={`fa-solid ${result.worth_it ? 'fa-face-grin-stars text-green-500' : 'fa-skull-crossbones text-red-500'} text-6xl mb-4`}></i>
+                            <h2 className={`text-4xl font-black mb-2 ${result.worth_it ? 'text-green-600' : 'text-red-600'}`}>{result.worth_it ? 'KAUFEN!' : 'FINGER WEG!'}</h2>
+                            <p className="font-bold text-xl mb-6">{result.item_name}</p>
+                            <div className="flex justify-center gap-8 mb-6">
+                                <div><p className="text-xs uppercase text-gray-500">Wert auf Vinted</p><p className="text-3xl font-black">{parsePrice(result.estimated_sell_price).toFixed(2)}€</p></div>
+                                <div><p className="text-xs uppercase text-gray-500">Max. Ankauf</p><p className="text-3xl font-black">{result.max_buy_price}€</p></div>
+                            </div>
+                            <p className="bg-gray-100 p-4 rounded-xl font-medium">{result.quick_advice}</p>
+                        </Card>
+                    )}
                 </div>
             );
         };
@@ -522,19 +399,17 @@
         const Sniper = () => {
             const { alerts, actions, addToast } = useAppContext();
             const [brand, setBrand] = useState("");
-            const addAlert = () => { if(brand.trim()) { actions.addAlert({ brand: brand.trim() }); setBrand(""); addToast("Gespeichert"); }};
             return (
-                <div className="p-6 lg:p-12 max-w-5xl mx-auto h-full overflow-y-auto pb-32">
-                    <h1 className="text-4xl font-extrabold mb-8">Sniper & Trends</h1>
-                    <Card className="bg-gray-900 text-white mb-8 p-6 flex flex-col sm:flex-row gap-4"><input type="text" value={brand} onChange={e=>setBrand(e.target.value)} placeholder="Z.B. Carhartt" className="flex-1 bg-gray-800 border-none rounded-xl p-4 text-white outline-none" /><Button onClick={addAlert} className="!bg-red-600">Speichern</Button></Card>
+                <div className="p-6 lg:p-12 max-w-4xl mx-auto h-full overflow-y-auto pb-32">
+                    <h1 className="text-4xl font-extrabold mb-8">Sniper Radar</h1>
+                    <Card className="mb-8 p-6 flex gap-4"><Input value={brand} onChange={e=>setBrand(e.target.value)} placeholder="Marke eingeben..." className="flex-1" /><Button onClick={()=>{if(brand){actions.addAlert({brand}); setBrand(""); addToast("Gespeichert");}}}>Überwachen</Button></Card>
                     <div className="space-y-4">
-                        {alerts.map(a => a && (
-                            <Card key={a.id} className="p-5 flex justify-between items-center bg-white border border-gray-200">
-                                <p className="font-bold text-lg flex-1">{a.brand}</p>
+                        {alerts.map(a => (
+                            <Card key={a.id} className="flex justify-between items-center p-5">
+                                <p className="font-bold text-lg">{a.brand}</p>
                                 <div className="flex gap-2">
-                                    <Button variant="vinted" onClick={()=>window.open(`https://www.vinted.de/vetements?search_text=${encodeURIComponent(a.brand)}&order=newest_first`)} icon="fa-shirt">Vinted</Button>
-                                    <Button variant="secondary" onClick={()=>window.open(`https://www.kleinanzeigen.de/s-sortierung:erstellungsdatum/${encodeURIComponent(a.brand).replace(/%20/g, '-')}/k0`)} icon="fa-tag">Ebay</Button>
-                                    <Button variant="danger" onClick={()=>actions.deleteAlert(a.id)} icon="fa-trash"></Button>
+                                    <Button variant="vinted" onClick={()=>window.open(`https://www.vinted.de/vetements?search_text=${encodeURIComponent(a.brand)}&order=newest_first`)} size="sm">Vinted</Button>
+                                    <Button variant="danger" onClick={()=>actions.deleteAlert(a.id)} icon="fa-trash" size="sm"></Button>
                                 </div>
                             </Card>
                         ))}
@@ -545,151 +420,68 @@
 
         // --- SMART REPLY ---
         const SmartReply = () => {
-            const { addToast, settings } = useAppContext();
-            const [price, setPrice] = useState("");
-            const [date, setDate] = useState("morgen");
-            const [lang, setLang] = useState("DE");
-
-            const txts = {
-                DE: { f: "Moin! 👋 Freut mich, dass es dir gefällt.", l: `Moin! 👋 Schmerzgrenze liegt bei [PREIS] €. Deal?`, b: `Moin! 👋 Paket geht [DATUM] raus.`, s: `Moin! 👋 Paket ist unterwegs!` },
-                EN: { f: "Hi! 👋 Glad you like it.", l: `Hi! 👋 My limit is [PREIS] €. Deal?`, b: `Hi! 👋 Package shipped by [DATUM].`, s: `Hi! 👋 Package is on the way!` },
-                FR: { f: "Salut ! 👋 Ravi que ça te plaise.", l: `Salut ! 👋 Mon dernier prix est [PREIS] €.`, b: `Salut ! 👋 Expédié [DATUM] au plus tard.`, s: `Salut ! 👋 Colis en route !` },
-                NL: { f: "Hoi! 👋 Leuk dat je het mooi vindt.", l: `Hoi! 👋 Bodemprijs is [PREIS] €. Deal?`, b: `Hoi! 👋 Pakketje gaat [DATUM] op de post.`, s: `Hoi! 👋 Pakket is onderweg!` }
-            };
-
-            const tpls = [
-                { id: 'f', title: 'Interesse', icon: 'fa-heart text-red-500' }, { id: 'l', title: 'Gegenangebot', icon: 'fa-arrow-trend-down text-orange-500', hp:true },
-                { id: 'b', title: 'Nach dem Kauf', icon: 'fa-bag-shopping text-vinted-500', hd:true }, { id: 's', title: 'Verschickt', icon: 'fa-truck-fast text-blue-500' }
-            ];
-
-            return (
-                <div className="p-6 lg:p-12 max-w-6xl mx-auto h-full overflow-y-auto pb-32">
-                    <h1 className="text-4xl font-extrabold mb-8">Smart Reply</h1>
-                    <Card noPadding className="flex divide-x border mb-8">
-                        <div className="p-4 flex-1 flex gap-3 items-center"><i className="fa-solid fa-euro-sign"></i><input type="number" placeholder="Preis" value={price} onChange={e=>setPrice(e.target.value)} className="w-full outline-none font-bold" /></div>
-                        <div className="p-4 flex-1 flex gap-3 items-center"><i className="fa-regular fa-calendar"></i><input type="text" placeholder="Datum" value={date} onChange={e=>setDate(e.target.value)} className="w-full outline-none font-bold" /></div>
-                        <div className="p-4 flex-1 flex gap-3 items-center bg-gray-50"><select value={lang} onChange={e=>setLang(e.target.value)} className="bg-transparent w-full font-bold outline-none"><option value="DE">Deutsch</option><option value="EN">English</option><option value="FR">Français</option><option value="NL">Nederlands</option></select></div>
-                    </Card>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {tpls.map(t => {
-                            let text = txts[lang][t.id];
-                            if(t.hp) text = text.replace('[PREIS]', price||'X'); if(t.hd) text = text.replace('[DATUM]', date||'X');
-                            text += `\n\n${settings?.signature || ''}`;
-                            return (
-                                <Card key={t.id} className="p-6 flex flex-col">
-                                    <h3 className="font-bold mb-4 flex items-center gap-2"><i className={`fa-solid ${t.icon}`}></i> {t.title}</h3>
-                                    <p className="whitespace-pre-wrap text-sm mb-6 flex-1 bg-gray-50 p-4 rounded-xl">{text}</p>
-                                    <Button onClick={()=>{navigator.clipboard.writeText(text); addToast("Kopiert!");}} className="w-full" variant="secondary">Kopieren</Button>
-                                </Card>
-                            )
-                        })}
-                    </div>
-                </div>
-            );
-        };
-
-        // --- ROUTENPLANER ---
-        const ShippingRoutePlanner = () => {
-            const { routeStops, actions, addToast } = useAppContext();
-            const [start, setStart] = useState("");
+            const { addToast } = useAppContext();
+            const copy = (txt) => { navigator.clipboard.writeText(txt); addToast("Kopiert!"); };
             return (
                 <div className="p-6 lg:p-12 max-w-5xl mx-auto h-full overflow-y-auto pb-32">
-                    <h1 className="text-4xl font-extrabold mb-8">Routenplaner</h1>
-                    <Card className="p-8 mb-8"><Input label="Startpunkt" value={start} onChange={e=>setStart(e.target.value)} placeholder="Zuhause..." /></Card>
-                    <Card className="p-8"><h2 className="font-bold mb-4">Shops hinzufügen</h2>
-                        <div className="flex gap-2 mb-6">{VINTED_DATA.carriers.map(c=><Button key={c} variant="secondary" onClick={()=>actions.addRouteStop(c)}>+ {c}</Button>)}</div>
-                        <div className="space-y-4 mb-6">
-                            {(routeStops||[]).map(s=> s && (
-                                <div key={s.id} className="flex gap-4 items-center bg-gray-50 p-4 rounded-xl">
-                                    <span className="font-bold w-20">{s.carrier}</span><Input value={s.notes} onChange={e=>actions.updateRouteStop(s.id, e.target.value)} placeholder="Pakete notieren..." className="flex-1" /><button onClick={()=>actions.deleteRouteStop(s.id)} className="text-red-500 p-2"><i className="fa-solid fa-trash"></i></button>
-                                </div>
-                            ))}
-                        </div>
-                        <Button variant="vinted" className="w-full" size="lg" onClick={()=>{ if(!start) return addToast("Startpunkt fehlt", "warning"); window.open(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(start)}&waypoints=${routeStops.filter(Boolean).map(s=>encodeURIComponent(s.carrier+' Paketshop')).join('|')}`); }}>Route starten</Button>
-                    </Card>
+                    <h1 className="text-4xl font-extrabold mb-8">Smart Reply</h1>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Card className="p-6"><h3 className="font-bold mb-2">Interesse wecken</h3><p className="text-sm mb-4 text-gray-600">Moin! 👋 Freut mich, dass dir das Teil gefällt. Zustand ist top. Sag Bescheid, wenn du Fragen hast!</p><Button onClick={()=>copy("Moin! 👋 Freut mich, dass dir das Teil gefällt. Zustand ist top. Sag Bescheid, wenn du Fragen hast!")} className="w-full">Kopieren</Button></Card>
+                        <Card className="p-6"><h3 className="font-bold mb-2">Deal closing</h3><p className="text-sm mb-4 text-gray-600">Moin! 👋 Danke für den Kauf! Geht schnellstmöglich und sicher verpackt auf die Reise zu dir.</p><Button onClick={()=>copy("Moin! 👋 Danke für den Kauf! Geht schnellstmöglich und sicher verpackt auf die Reise zu dir.")} className="w-full">Kopieren</Button></Card>
+                    </div>
                 </div>
             );
         };
 
-        // --- PROFIT TRACKER ---
+        // --- ROUTENPLANER & PROFIT & SETTINGS ---
+        const ShippingRoutePlanner = () => <div className="p-12 text-center"><h1 className="text-3xl font-bold">Routenplaner aktiv (Work in Progress)</h1></div>;
         const ProfitTracker = () => {
             const { listings } = useAppContext();
-            const sold = (listings||[]).filter(l => l && l.status === 'sold');
-            const rev = sold.reduce((s, l) => s + parsePrice(l?.price), 0);
-            const cost = sold.reduce((s, l) => s + parsePrice(l?.buy_price), 0);
-            const profit = rev - cost;
-            const margin = rev > 0 ? ((profit / rev) * 100).toFixed(1) : 0;
-
+            const rev = listings.filter(l=>l?.status==='sold').reduce((s, l) => s + parsePrice(l?.price), 0);
             return (
-                <div className="p-6 lg:p-12 max-w-7xl mx-auto h-full overflow-y-auto pb-32">
-                    <h1 className="text-4xl font-extrabold mb-10">Kassenbuch</h1>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
-                        <Card className="p-6"><p className="text-[10px] font-bold text-gray-500 uppercase">Umsatz</p><h3 className="text-3xl font-black">{rev.toFixed(2)}€</h3></Card>
-                        <Card className="p-6"><p className="text-[10px] font-bold text-gray-500 uppercase">Ausgaben</p><h3 className="text-3xl font-black text-red-500">{cost.toFixed(2)}€</h3></Card>
-                        <Card className="p-6"><p className="text-[10px] font-bold text-gray-500 uppercase">Marge</p><h3 className="text-3xl font-black text-vinted-600">{margin}%</h3></Card>
-                        <Card className="p-6 bg-gray-900 text-white"><p className="text-[10px] font-bold text-gray-400 uppercase">Netto-Gewinn</p><h3 className="text-3xl font-black">{profit.toFixed(2)}€</h3></Card>
-                    </div>
-                </div>
+                <div className="p-6 lg:p-12 max-w-4xl mx-auto"><h1 className="text-4xl font-extrabold mb-8">Kassenbuch</h1>
+                <Card className="p-10 bg-gray-900 text-white text-center"><p className="text-gray-400 uppercase text-sm font-bold">Umsatz Gesamt</p><h3 className="text-6xl font-black text-vinted-400 mt-2">{rev.toFixed(2)}€</h3></Card></div>
             );
         };
-
-        // --- SETTINGS ---
         const Settings = () => {
             const { settings, actions, addToast } = useAppContext();
-            const [local, setLocal] = useState(settings||{});
             return (
-                <div className="p-6 lg:p-12 max-w-3xl mx-auto h-full overflow-y-auto pb-32">
-                    <h1 className="text-4xl font-extrabold mb-8">Einstellungen</h1>
-                    <div className="grid grid-cols-2 gap-4 mb-8">
-                        <Card className="p-6 text-center cursor-pointer" onClick={actions.exportData}><i className="fa-solid fa-download text-2xl mb-2 text-vinted-600"></i><p className="font-bold">Backup Export</p></Card>
-                        <Card className="p-6 text-center cursor-pointer" onClick={()=>document.getElementById('fileIn').click()}><i className="fa-solid fa-upload text-2xl mb-2 text-vinted-600"></i><p className="font-bold">Backup Import</p><input type="file" id="fileIn" className="hidden" accept=".json" onChange={e => { const r = new FileReader(); r.onload = ev => actions.importData(JSON.parse(ev.target.result)); r.readAsText(e.target.files[0]); }} /></Card>
-                    </div>
-                    <Card className="p-8 space-y-6">
-                        <Input label="Name" value={local.userName} onChange={e=>setLocal({...local, userName: e.target.value})} />
-                        <Input label="Signatur" value={local.signature} onChange={e=>setLocal({...local, signature: e.target.value})} />
-                        <Select label="KI Modell" value={local.apiModel} onChange={e=>setLocal({...local, apiModel: e.target.value})} options={['gemini-1.5-flash', 'gemini-flash-latest', 'gemini-1.5-pro']} />
-                        <Button onClick={()=> {actions.updateSettings(local); addToast("Gespeichert");}} className="w-full" size="lg">Speichern</Button>
-                    </Card>
-                </div>
+                <div className="p-6 lg:p-12 max-w-3xl mx-auto"><h1 className="text-4xl font-extrabold mb-8">Einstellungen</h1>
+                <Card className="p-8 space-y-6"><Input label="Verkäufer Name" value={settings.userName} onChange={e=>actions.updateSettings({userName: e.target.value})} /><Input label="Signatur (z.B. LG Rico)" value={settings.signature} onChange={e=>actions.updateSettings({signature: e.target.value})} /></Card></div>
             );
         };
 
-        // --- MAIN ROUTER ---
+        // --- MAIN APP (Navigation Router) ---
         const MainApp = () => {
             const [view, setView] = useState('dashboard'); 
-            const [isOpen, setIsOpen] = useState(false);
-            const { settings } = useAppContext();
+            const [isSidebarOpen, setSidebarOpen] = useState(false);
 
-            const renderView = () => {
-                switch(view) {
-                    case 'dashboard': return <Dashboard setView={setView} />;
-                    case 'analyze': return <AnalyzeStudio />;
-                    case 'history': return <Inventory setView={setView} />;
-                    case 'dealchecker': return <DealChecker />;
-                    case 'sniper': return <Sniper />;
-                    case 'smartreply': return <SmartReply />;
-                    case 'shipping': return <ShippingRoutePlanner />;
-                    case 'profit': return <ProfitTracker />;
-                    case 'settings': return <Settings />;
-                    default: return <Dashboard setView={setView} />;
-                }
+            const menu = {
+                dashboard: { icon: 'fa-grip', label: 'Dashboard', component: <Dashboard setView={setView} /> },
+                dealchecker: { icon: 'fa-bolt', label: 'Flohmarkt Radar', component: <DealChecker /> },
+                analyze: { icon: 'fa-wand-magic-sparkles', label: 'Analyse Studio', component: <AnalyzeStudio /> },
+                history: { icon: 'fa-box-archive', label: 'Inventar', component: <Inventory /> },
+                sniper: { icon: 'fa-crosshairs', label: 'Sniper Radar', component: <Sniper /> },
+                smartreply: { icon: 'fa-comment-dots', label: 'Smart Reply', component: <SmartReply /> },
+                shipping: { icon: 'fa-route', label: 'Routenplaner', component: <ShippingRoutePlanner /> },
+                profit: { icon: 'fa-chart-pie', label: 'Kassenbuch', component: <ProfitTracker /> },
+                settings: { icon: 'fa-gear', label: 'Einstellungen', component: <Settings /> },
             };
 
             return (
-                <div className="flex h-screen w-full bg-[#f4f5f7]">
-                    {isOpen && <div className="fixed inset-0 bg-gray-900/40 z-40 lg:hidden" onClick={() => setIsOpen(false)}></div>}
-                    <aside className={`fixed lg:relative w-[280px] bg-white border-r h-full flex flex-col z-50 transition-transform ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-                        <div className="h-20 flex items-center px-8 border-b"><div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center text-white mr-3"><i className="fa-solid fa-shirt"></i></div><span className="text-xl font-extrabold">Vinted<span className="text-vinted-600">Pro</span></span></div>
-                        <nav className="flex-1 py-6 px-4 space-y-1 overflow-y-auto no-scrollbar">
-                            {[ {id:'dashboard',i:'fa-grip',l:'Dashboard'}, {id:'analyze',i:'fa-wand-magic-sparkles',l:'Analyse'}, {id:'history',i:'fa-box-archive',l:'Inventar'}, {id:'dealchecker',i:'fa-scale-balanced',l:'Deal Checker'}, {id:'sniper',i:'fa-crosshairs',l:'Sniper'}, {id:'smartreply',i:'fa-comment-dots',l:'Smart Reply'}, {id:'shipping',i:'fa-route',l:'Routenplaner'}, {id:'profit',i:'fa-chart-pie',l:'Kassenbuch'}, {id:'settings',i:'fa-gear',l:'Settings'} ].map(m => (
-                                <button key={m.id} onClick={() => { setView(m.id); setIsOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-sm ${view === m.id ? 'bg-gray-100 text-vinted-600' : 'text-gray-500 hover:bg-gray-50'}`}><i className={`fa-solid ${m.i} w-6`}></i>{m.l}</button>
+                <div className="flex h-screen w-full overflow-hidden bg-transparent relative z-10">
+                    <div className={`fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 transition-opacity lg:hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSidebarOpen(false)}></div>
+                    <aside className={`fixed lg:relative w-[280px] bg-white/95 backdrop-blur-xl shadow-[4px_0_24px_rgba(0,0,0,0.02)] h-full flex flex-col z-50 transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+                        <div className="h-24 flex items-center px-8 shrink-0 border-b border-gray-100"><div className="w-10 h-10 bg-gradient-to-br from-vinted-500 to-vinted-700 rounded-xl flex items-center justify-center text-white mr-4 shadow-lg shadow-vinted-500/30"><i className="fa-solid fa-shirt"></i></div><span className="text-2xl font-extrabold tracking-tight">Vinted<span className="text-vinted-600">Pro</span></span></div>
+                        <nav className="flex-1 py-6 px-4 space-y-2 overflow-y-auto no-scrollbar">
+                            {Object.entries(menu).map(([id, item]) => (
+                                <button key={id} onClick={() => { setView(id); setSidebarOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all font-bold text-sm ${view === id ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}><i className={`fa-solid ${item.icon} w-6 text-lg ${view === id ? 'text-vinted-400' : ''}`}></i>{item.label}</button>
                             ))}
                         </nav>
-                        <div className="p-4 border-t"><div className="flex items-center gap-3 cursor-pointer" onClick={()=>setView('settings')}><div className="w-10 h-10 bg-vinted-100 rounded-full flex items-center justify-center text-vinted-600 font-bold">{settings?.userName?.charAt(0)||'R'}</div><div className="flex-1"><p className="text-sm font-bold truncate">{settings?.userName||'Rico'}</p><p className="text-[10px] text-green-500 font-bold">Pro</p></div></div></div>
                     </aside>
-                    <main className="flex-1 flex flex-col h-full">
-                        <header className="h-16 bg-white border-b flex items-center px-4 lg:hidden"><button onClick={() => setIsOpen(true)} className="w-10 h-10 flex items-center justify-center"><i className="fa-solid fa-bars text-xl"></i></button></header>
-                        <div className="flex-1 relative overflow-hidden">{renderView()}</div>
+                    <main className="flex-1 flex flex-col min-w-0 h-full relative z-0">
+                        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200/50 flex items-center px-4 shrink-0 lg:hidden z-20"><button onClick={() => setSidebarOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-700"><i className="fa-solid fa-bars text-xl"></i></button><span className="font-extrabold ml-3 text-lg">{menu[view]?.label}</span></header>
+                        <div className="flex-1 relative z-10 overflow-hidden">{menu[view]?.component}</div>
                     </main>
                 </div>
             );
@@ -701,5 +493,3 @@
     </script>
 </body>
 </html>
-
-```
