@@ -81,7 +81,7 @@
     <div id="root" class="h-full w-full relative z-10"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, createContext, useContext, Component } = React;
+        const { useState, useEffect, createContext, useContext, Component, useRef } = React;
 
         // ==========================================
         // 0. ABSOLUTE ROBUSTHEIT & ERROR BOUNDARY
@@ -115,7 +115,7 @@
                             </div>
                             
                             <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-gray-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl shadow-floating transition-all hover:-translate-y-1">
-                                <i className="fa-solid fa-rotate-right mr-2"></i> Cache leeren & Neustarten
+                                <i className="fa-solid fa-rotate-right mr-2"></i> Alles reparieren & Neu laden
                             </button>
                         </div>
                     );
@@ -144,9 +144,13 @@
             reader.onerror = error => reject(error);
         });
 
-        // Robust API Call with Exponential Backoff
+        // Flohmarkt-bereiter API Call mit maximaler Fehler-Toleranz
         const callGemini = async (prompt, images = [], customModel = "gemini-1.5-flash") => {
-            const modelsToTry = [customModel || 'gemini-1.5-flash', 'gemini-flash-latest', 'gemini-1.5-pro'];
+            if (!navigator.onLine) {
+                throw new Error("Keine Internetverbindung! Bitte prüfe dein Netz auf dem Flohmarkt.");
+            }
+
+            const modelsToTry = [customModel || 'gemini-1.5-flash', 'gemini-flash-latest'];
             let lastError = null;
 
             for (const model of modelsToTry) {
@@ -165,14 +169,14 @@
                         const err = await response.json().catch(()=>({}));
                         if (response.status === 429 || response.status >= 500) {
                             await new Promise(r => setTimeout(r, 2000));
-                            lastError = new Error(`Rate Limit bei ${model}`);
+                            lastError = new Error(`Rate Limit / Server überlastet (${response.status})`);
                             continue; 
                         }
                         throw new Error(err.error?.message || `HTTP ${response.status}`);
                     }
                     
                     const data = await response.json();
-                    if(!data?.candidates?.[0]?.content) throw new Error("Leere Antwort der KI.");
+                    if(!data?.candidates?.[0]?.content) throw new Error("Leere Antwort der KI. (Netzwerkfehler?)");
                     
                     let text = data.candidates[0].content.parts[0].text;
                     const match = text.match(/\{[\s\S]*\}/);
@@ -183,11 +187,11 @@
                     lastError = error;
                 }
             }
-            throw new Error(`KI-Server überlastet. Letzter Fehler: ${lastError?.message}`);
+            throw new Error(`Verbindungsfehler zur KI. Letzter Fehler: ${lastError?.message}`);
         };
 
         // ==========================================
-        // 2. STATE MANAGEMENT (v16)
+        // 2. STATE MANAGEMENT (v18 - Clean Wipe)
         // ==========================================
         const AppContext = createContext(null);
         
@@ -200,9 +204,8 @@
                         const sticky = window.localStorage.getItem(key);
                         if (sticky) {
                             const parsed = JSON.parse(sticky);
-                            // Sichert ab, dass Arrays Arrays bleiben und null-Einträge gefiltert werden
                             if (Array.isArray(defaultValue)) {
-                                return Array.isArray(parsed) ? parsed.filter(item => item !== null && item !== undefined) : defaultValue;
+                                return Array.isArray(parsed) ? parsed.filter(Boolean) : defaultValue;
                             }
                             if(typeof parsed === 'object' && parsed !== null) return {...defaultValue, ...parsed};
                             return parsed;
@@ -214,10 +217,10 @@
                 return [value, setValue];
             };
 
-            const [listings, setListings] = useStickyState([], 'vpro_listings_v16');
-            const [alerts, setAlerts] = useStickyState([], 'vpro_alerts_v16');
-            const [routeStops, setRouteStops] = useStickyState([], 'vpro_routes_v16');
-            const [settings, setSettings] = useStickyState({ userName: 'Rico', signature: 'LG Rico 😁', apiModel: 'gemini-1.5-flash' }, 'vpro_settings_v16');
+            const [listings, setListings] = useStickyState([], 'vpro_listings_v18');
+            const [alerts, setAlerts] = useStickyState([], 'vpro_alerts_v18');
+            const [routeStops, setRouteStops] = useStickyState([], 'vpro_routes_v18');
+            const [settings, setSettings] = useStickyState({ userName: 'Rico', signature: 'LG Rico 😁', apiModel: 'gemini-1.5-flash' }, 'vpro_settings_v18');
 
             const addToast = (message, type = 'success') => {
                 const id = Date.now();
@@ -240,15 +243,9 @@
 
                 updateSettings: (u) => setSettings(prev => ({...(prev||{}), ...u})),
 
-                // Backup Functions
                 exportData: () => {
                     try {
-                        const data = { 
-                            listings: listings.filter(Boolean), 
-                            alerts: alerts.filter(Boolean), 
-                            routeStops: routeStops.filter(Boolean), 
-                            settings 
-                        };
+                        const data = { listings: listings.filter(Boolean), alerts: alerts.filter(Boolean), routeStops: routeStops.filter(Boolean), settings };
                         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
@@ -375,7 +372,7 @@
         );
 
         // ==========================================
-        // 4. VIEWS 
+        // 4. VIEWS
         // ==========================================
 
         // --- DASHBOARD ---
@@ -387,7 +384,7 @@
             const revenue = sold.reduce((acc, curr) => acc + parsePrice(curr?.price), 0);
             const activeValue = active.reduce((acc, curr) => acc + parsePrice(curr?.price), 0);
             const conversionRate = listings.length ? Math.round((sold.length / listings.length) * 100) : 0;
-            const recent = [...listings].sort((a,b) => new Date(b?.date || 0) - new Date(a?.date || 0)).slice(0, 4);
+            const recent = [...listings].filter(l => l?.title).sort((a,b) => new Date(b?.date || 0) - new Date(a?.date || 0)).slice(0, 4);
 
             return (
                 <div className="p-6 lg:p-12 max-w-[1600px] mx-auto h-full overflow-y-auto animate-fade-in no-scrollbar pb-32">
@@ -476,7 +473,7 @@
             );
         };
 
-        // --- ANALYZE STUDIO (Listing Generator) ---
+        // --- ANALYZE STUDIO (VINTED SPECIFIC & DIREKT UPLOAD) ---
         const AnalyzeStudio = () => {
             const { actions, addToast, settings } = useAppContext();
             const [step, setStep] = useState(1);
@@ -495,10 +492,18 @@
                 deepAnalysis: false
             });
 
+            // Cleanup für Memory Leaks bei Bildern
+            useEffect(() => {
+                return () => files.forEach(f => URL.revokeObjectURL(f.preview));
+            }, [files]);
+
             const handleDrop = (e) => {
                 e.preventDefault();
                 const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-                if(dropped.length) setFiles(prev => [...prev, ...dropped]);
+                if(dropped.length) {
+                    dropped.forEach(f => f.preview = URL.createObjectURL(f));
+                    setFiles(prev => [...prev, ...dropped]);
+                }
             };
 
             const runAnalysis = async () => {
@@ -508,7 +513,7 @@
                     for(let f of files) b64s.push(await fileToBase64(f));
 
                     const styleInstruction = data.style === 'Detailliert'
-                        ? `Schreibe locker, professionell und seeehr ausführlich. Starte zwingend mit "Moin! 👋". Beschreibe Zustand, Material, Farbe und Passform in schönen Sätzen. Beende mit der Signatur: "${settings?.signature || 'LG'}" und einem kurzen rechtlichen Hinweis (Da Privatverkauf: Keine Garantie/Rücknahme).`
+                        ? `Schreibe locker, professionell und ausführlich. Starte zwingend mit "Moin! 👋". Beschreibe Zustand, Material, Farbe und Passform in schönen Sätzen. Beende mit der Signatur: "${settings?.signature || 'LG'}" und einem kurzen rechtlichen Hinweis (Da Privatverkauf: Keine Garantie/Rücknahme).`
                         : `Schreibe extrem kurz, präzise und minimalistisch im Stichpunkt-Stil für schnelle Lesbarkeit. Nur harte Fakten. Keine Begrüßung, kein Fließtext.`;
 
                     const priceInstruction = data.pricingStrategy === 'Pessimistisch'
@@ -545,12 +550,23 @@
                         price: parsePrice(parsed.suggested_price), buy_price: 0, status: 'active', shipping_status: 'pack',
                         date: new Date().toISOString(), category: data.category, condition: data.condition, brand: data.brand
                     });
-                    addToast("Gespeichert!", "success");
+                    addToast("Gespeichert im Inventar!", "success");
                     setStep(4);
                 } catch (e) {
                     addToast(e.message, "error");
                     setStep(2);
                 } finally { setLoading(false); }
+            };
+
+            const handleVintedExport = () => {
+                if(!result) return;
+                const hashtagString = Array.isArray(result.hashtags) ? result.hashtags.join(' ') : result.hashtags;
+                const clipboardText = `${result.title}\n\n${result.description}\n\n${hashtagString}\n\nPreis: ${parsePrice(result.suggested_price)} €`;
+                navigator.clipboard.writeText(clipboardText);
+                addToast("Titel & Text kopiert! Öffne Vinted...", "success");
+                setTimeout(() => {
+                    window.open('https://www.vinted.de/items/new', '_blank');
+                }, 800);
             };
 
             return (
@@ -580,7 +596,11 @@
                                 <p className="text-gray-500 font-medium mb-10">Lade alle Perspektiven deines Artikels hoch für die beste SEO-Analyse.</p>
                                 
                                 <div onDragOver={e=>e.preventDefault()} onDrop={handleDrop} className="border-2 border-dashed border-gray-300 rounded-3xl bg-white hover:bg-gray-50 hover:border-vinted-400 transition-all p-12 cursor-pointer relative group shadow-inner-light">
-                                    <input type="file" multiple accept="image/*" onChange={(e) => setFiles(prev => [...prev, ...Array.from(e.target.files)])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                    <input type="file" multiple accept="image/*" onChange={(e) => {
+                                        const newFiles = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+                                        newFiles.forEach(f => f.preview = URL.createObjectURL(f));
+                                        setFiles(prev => [...prev, ...newFiles]);
+                                    }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                                     <i className="fa-solid fa-cloud-arrow-up text-5xl text-gray-300 group-hover:text-vinted-500 mb-4 transition-colors group-hover:-translate-y-2 duration-300"></i>
                                     <h3 className="font-bold text-gray-900 text-lg">Dateien auswählen oder ablegen</h3>
                                 </div>
@@ -589,7 +609,7 @@
                                     <div className="mt-8 grid grid-cols-4 md:grid-cols-5 gap-4">
                                         {files.map((f, i) => (
                                             <div key={i} className="aspect-square rounded-2xl overflow-hidden shadow-sm relative group border border-gray-200 hover:-translate-y-1 transition-transform">
-                                                <img src={URL.createObjectURL(f)} className="w-full h-full object-cover" />
+                                                <img src={f.preview} className="w-full h-full object-cover" />
                                                 <button onClick={()=>setFiles(files.filter((_, idx)=>idx!==i))} className="absolute top-1.5 right-1.5 bg-white/90 backdrop-blur-sm rounded-lg p-1.5 text-red-500 opacity-0 group-hover:opacity-100 shadow-sm transition-all hover:bg-red-500 hover:text-white"><i className="fa-solid fa-xmark text-xs"></i></button>
                                             </div>
                                         ))}
@@ -676,7 +696,7 @@
                                     <div className="absolute inset-2 border-4 border-vinted-300 rounded-full border-b-transparent animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
                                     <div className="absolute inset-0 flex items-center justify-center text-vinted-600 text-4xl"><i className="fa-solid fa-microchip animate-pulse-fast"></i></div>
                                 </div>
-                                <h2 className="text-3xl font-extrabold text-gray-900 mb-3">KI berechnet Listing</h2>
+                                <h2 className="text-3xl font-extrabold text-gray-900 mb-3">KI generiert Listing</h2>
                                 <div className="h-6 overflow-hidden">
                                     <p className="text-gray-500 font-medium text-lg animate-[slideUp_2s_infinite]">Scanne Bildpunkte und aggregiere Marktdaten...</p>
                                 </div>
@@ -685,6 +705,18 @@
 
                         {step === 4 && result && (
                             <div className="space-y-6 animate-slide-in-right">
+                                
+                                {/* DIRECT VINTED EXPORT BUTTON */}
+                                <Card className="p-8 bg-gradient-to-r from-vinted-600 to-vinted-800 text-white shadow-floating border-none mb-8">
+                                    <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                                        <div>
+                                            <h2 className="text-2xl font-bold mb-1 flex items-center gap-2"><i className="fa-solid fa-rocket"></i> Listing fertig!</h2>
+                                            <p className="text-vinted-100 text-sm">Der Text und Titel werden kopiert und Vinted in einem neuen Tab geöffnet.</p>
+                                        </div>
+                                        <Button onClick={handleVintedExport} className="w-full md:w-auto !bg-white !text-vinted-700 shadow-lg hover:shadow-xl !px-8" size="lg" icon="fa-arrow-up-right-from-square">Direkt bei Vinted einstellen</Button>
+                                    </div>
+                                </Card>
+
                                 <Card noPadding>
                                     <div className="px-8 py-5 bg-white border-b border-gray-100 flex justify-between items-center">
                                         <div className="font-bold text-[11px] uppercase tracking-widest text-gray-500"><i className="fa-solid fa-heading text-vinted-500 mr-2"></i> SEO Titel</div>
@@ -695,7 +727,7 @@
 
                                 <Card noPadding>
                                     <div className="px-8 py-5 bg-white border-b border-gray-100 flex justify-between items-center">
-                                        <div className="font-bold text-[11px] uppercase tracking-widest text-gray-500"><i className="fa-solid fa-align-left text-vinted-500 mr-2"></i> Verkaufstext</div>
+                                        <div className="font-bold text-[11px] uppercase tracking-widest text-gray-500"><i className="fa-solid fa-align-left text-vinted-500 mr-2"></i> Text</div>
                                         <Button variant="ghost" size="sm" onClick={()=>{navigator.clipboard.writeText(result.description); addToast('Kopiert');}} icon="fa-copy">Kopieren</Button>
                                     </div>
                                     <div className="p-8 bg-gray-50/50">
@@ -770,7 +802,9 @@
                                         </Card>
                                     </div>
                                 </div>
-                                <div className="pt-8 text-center"><Button variant="secondary" onClick={()=>{setStep(1); setFiles([]); setResult(null);}} icon="fa-rotate-right" size="lg" className="mx-auto shadow-md hover:-translate-y-1">Neues Listing generieren</Button></div>
+                                <div className="pt-8 text-center">
+                                    <Button variant="secondary" onClick={()=>{setStep(1); setFiles([]); setResult(null);}} icon="fa-rotate-right" size="lg" className="mx-auto shadow-md hover:-translate-y-1">Neues Listing generieren</Button>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -778,7 +812,7 @@
             );
         };
 
-        // --- INVENTORY ---
+        // --- INVENTORY (Meine Artikel) - BULLETPROOF ---
         const Inventory = ({ setView }) => {
             const { listings, actions, addToast } = useAppContext();
             const [search, setSearch] = useState('');
@@ -911,450 +945,7 @@
             );
         };
 
-        // --- DEAL CHECKER PRO ---
-        const DealChecker = () => {
-            const { addToast, settings } = useAppContext();
-            const [links, setLinks] = useState("");
-            const [files, setFiles] = useState([]);
-            const [purchasePrice, setPurchasePrice] = useState("");
-            const [isFree, setIsFree] = useState(false);
-            const [margin, setMargin] = useState(40);
-            const [loading, setLoading] = useState(false);
-            const [result, setResult] = useState(null);
-
-            const handleDrop = (e) => {
-                e.preventDefault();
-                const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-                if(dropped.length) setFiles(prev => [...prev, ...dropped]);
-            };
-
-            const handleCheck = async () => {
-                if(!links.trim() && files.length === 0) return addToast("Bitte Text, Link oder Bilder einfügen.", "warning");
-                setLoading(true); setResult(null);
-                
-                try {
-                    const b64s = [];
-                    for(let f of files) b64s.push(await fileToBase64(f));
-
-                    const priceInfo = isFree ? `Zu verschenken (0 €)` : (purchasePrice ? `${purchasePrice} €` : `Nicht angegeben`);
-
-                    const prompt = `Analysiere diesen Deal für Reselling: ${links || 'Siehe angehängte Bilder'}.
-                    Geforderter Preis: ${priceInfo}. Ziel-Netto-Marge: ${margin}%. Berücksichtige Fahrt/Verpackung (ca 3€).
-                    GIB AUSSCHLIESSLICH DIESES JSON ZURÜCK:
-                    {
-                        "item_name": "Genaue Bezeichnung",
-                        "demand_level": "Hoch / Mittel / Niedrig",
-                        "estimated_sell_price": 50,
-                        "calculated_profit": 15.50,
-                        "max_buy_price": 25.00,
-                        "roi_percent": 30,
-                        "risk_assessment": "Hoch / Mittel / Niedrig",
-                        "worth_it": true,
-                        "deep_analysis": "Warum lohnt sich das? Marktlage?",
-                        "action_steps": ["Schritt 1", "Schritt 2"],
-                        "red_flags": ["Worauf achten?"],
-                        "negotiation_msg": "Fertiger Text, um den Verkäufer anzuschreiben."
-                    }`;
-                    
-                    const res = await callGemini(prompt, b64s, settings?.apiModel);
-                    setResult(res);
-                } catch(e) { addToast(e.message, "error"); } finally { setLoading(false); }
-            };
-
-            return (
-                <div className="p-6 lg:p-12 max-w-[1600px] mx-auto h-full overflow-y-auto animate-fade-in pb-32">
-                    <div className="mb-10 animate-slide-in-right">
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Deal Checker Pro</h1>
-                        <p className="text-gray-500 mt-2 font-medium text-lg">Überprüfe Angebote und berechne deinen garantierten Profit.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                        <div className="space-y-8 animate-slide-up" style={{animationDelay: '100ms'}}>
-                            <Card className="p-8">
-                                <h2 className="text-xl font-extrabold text-gray-900 mb-6 border-b border-gray-100 pb-4 flex items-center gap-3"><div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i className="fa-solid fa-file-invoice"></i></div> 1. Deal Details</h2>
-                                <Input multiline rows={3} placeholder="Link oder Textbeschreibung der Anzeige einfügen..." value={links} onChange={e=>setLinks(e.target.value)} icon="fa-link" />
-                                
-                                <div className="mt-6">
-                                    <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1 mb-2 block">Screenshots (Sehr Wichtig!)</label>
-                                    <div onDragOver={e=>e.preventDefault()} onDrop={handleDrop} className="border-2 border-dashed border-gray-300 rounded-3xl bg-white hover:bg-gray-50 transition-colors p-8 text-center cursor-pointer relative shadow-inner-light">
-                                        <input type="file" multiple accept="image/*" onChange={(e) => setFiles(prev => [...prev, ...Array.from(e.target.files)])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                                        <i className="fa-solid fa-camera-retro text-3xl text-gray-400 mb-3"></i>
-                                        <p className="text-sm text-gray-600 font-bold">Bilder vom Deal ablegen</p>
-                                    </div>
-                                    {files.length > 0 && (
-                                        <div className="mt-4 flex gap-4 overflow-x-auto no-scrollbar pb-2">
-                                            {files.map((f, i) => (
-                                                <div key={i} className="w-16 h-16 rounded-xl overflow-hidden shrink-0 relative border border-gray-200 shadow-sm">
-                                                    <img src={URL.createObjectURL(f)} className="w-full h-full object-cover" />
-                                                    <button onClick={()=>setFiles(files.filter((_, idx)=>idx!==i))} className="absolute top-1 right-1 bg-white/90 backdrop-blur-sm rounded p-1 shadow-sm text-red-500 hover:bg-red-500 hover:text-white transition-colors"><i className="fa-solid fa-xmark text-[10px]"></i></button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </Card>
-
-                            <Card className="p-8">
-                                <h2 className="text-xl font-extrabold text-gray-900 mb-6 border-b border-gray-100 pb-4 flex items-center gap-3"><div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center"><i className="fa-solid fa-calculator"></i></div> 2. Kalkulation</h2>
-                                <div className="flex items-center gap-3 mb-6 p-4 bg-vinted-50/50 rounded-2xl border border-vinted-100 cursor-pointer hover:bg-vinted-50 transition-colors shadow-inner-light" onClick={()=>setIsFree(!isFree)}>
-                                    <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${isFree ? 'bg-vinted-600 border-vinted-600 text-white' : 'border-gray-300 bg-white'}`}>
-                                        {isFree && <i className="fa-solid fa-check text-xs"></i>}
-                                    </div>
-                                    <span className="text-base font-bold text-vinted-900">Artikel ist Zu verschenken (0 €)</span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8">
-                                    <Input label="Geforderter Preis (€)" type="number" placeholder="z.B. 15" value={purchasePrice} onChange={e=>setPurchasePrice(e.target.value)} disabled={isFree} icon="fa-money-bill-wave" />
-                                    <div>
-                                        <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1 mb-2 block">Ziel-Marge (Netto)</label>
-                                        <div className="bg-white border border-gray-200 rounded-2xl p-3.5 flex items-center justify-between shadow-inner-light">
-                                            <input type="range" min="10" max="100" step="5" value={margin} onChange={e=>setMargin(Number(e.target.value))} className="w-2/3" />
-                                            <span className="font-bold text-vinted-600 text-base">{margin}%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <Button onClick={handleCheck} loading={loading} variant="primary" className="w-full" size="lg" icon="fa-magnifying-glass-chart">Deal analysieren</Button>
-                            </Card>
-                        </div>
-
-                        <div className="min-h-[600px] animate-slide-up" style={{animationDelay: '200ms'}}>
-                            {loading && (
-                                <Card className="h-full p-12 flex flex-col items-center justify-center text-center">
-                                    <div className="w-24 h-24 bg-gray-50 rounded-full border border-gray-100 shadow-inner-light flex items-center justify-center mb-8 relative">
-                                        <div className="absolute inset-0 border-4 border-vinted-500 rounded-full border-t-transparent animate-spin"></div>
-                                        <i className="fa-solid fa-brain text-4xl text-vinted-600 animate-pulse-fast"></i>
-                                    </div>
-                                    <p className="font-extrabold text-gray-900 mb-3 text-2xl">Analysiere Angebotsebene...</p>
-                                    <p className="text-sm text-gray-500 font-medium text-lg max-w-sm mx-auto leading-relaxed">Die KI prüft Marktnachfrage, vergleicht Preise und checkt das Risiko für diesen Artikel.</p>
-                                </Card>
-                            )}
-                            
-                            {result && !loading && (
-                                <Card className={`h-full flex flex-col relative overflow-hidden border-t-8 shadow-floating animate-slide-in-right ${result.worth_it ? 'border-t-green-500' : 'border-t-red-500'}`}>
-                                    <div className="p-8 md:p-10 flex-1 overflow-y-auto no-scrollbar">
-                                        <div className="flex flex-col sm:flex-row justify-between items-start gap-6 mb-8">
-                                            <div>
-                                                <h2 className={`text-4xl md:text-5xl font-black mb-3 tracking-tight ${result.worth_it ? 'text-green-600' : 'text-red-600'}`}>{result.worth_it ? 'Zuschlagen! 👍' : 'Finger weg! 🛑'}</h2>
-                                                <p className="text-gray-900 font-bold text-lg bg-gray-100 inline-block px-4 py-1.5 rounded-lg border border-gray-200">{result.item_name}</p>
-                                            </div>
-                                            <div className="flex flex-col gap-3 shrink-0 text-right">
-                                                <Badge color={result.risk_assessment==='Hoch'?'red':result.risk_assessment==='Mittel'?'amber':'green'} className="justify-center py-2 px-4 shadow-sm text-sm">Risiko: {result.risk_assessment}</Badge>
-                                                <Badge color={result.demand_level==='Hoch'?'green':result.demand_level==='Mittel'?'blue':'gray'} className="justify-center py-2 px-4 shadow-sm text-sm">Nachfrage: {result.demand_level}</Badge>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
-                                            <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 shadow-inner-light">
-                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Est. Vinted Wert</p>
-                                                <p className="text-3xl font-black text-gray-900">{parsePrice(result.estimated_sell_price).toFixed(2)} €</p>
-                                            </div>
-                                            <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 shadow-inner-light">
-                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Max. Ankauf</p>
-                                                <p className="text-3xl font-black text-gray-900">{result.max_buy_price} {result.max_buy_price !== '0' && result.max_buy_price !== 'Kostenlos!' && '€'}</p>
-                                            </div>
-                                            <div className={`${result.worth_it ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'} p-5 rounded-2xl border col-span-2 md:col-span-1 shadow-sm`}>
-                                                <p className="text-[10px] font-bold uppercase tracking-widest mb-2">Netto-Gewinn</p>
-                                                <div className="flex items-center gap-3">
-                                                    <p className="text-3xl font-black">{parsePrice(result.calculated_profit).toFixed(2)} €</p>
-                                                    <span className={`text-xs font-bold px-2 py-1 rounded bg-white shadow-sm ${result.worth_it ? 'text-green-600' : 'text-red-600'}`}>ROI: {result.roi_percent}%</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-8">
-                                            <div>
-                                                <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2"><i className="fa-solid fa-chart-line text-vinted-500"></i> Marktanalyse</h3>
-                                                <p className="text-base text-gray-700 font-medium leading-relaxed bg-gray-50/80 p-5 rounded-2xl border border-gray-200 shadow-inner-light">{result.deep_analysis}</p>
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div className="bg-blue-50/80 p-6 rounded-2xl border border-blue-200 shadow-sm">
-                                                    <h3 className="text-xs font-bold text-blue-800 uppercase tracking-widest mb-4 flex items-center gap-2"><i className="fa-solid fa-list-check"></i> Action Plan</h3>
-                                                    <ul className="space-y-3">
-                                                        {Array.isArray(result.action_steps) ? result.action_steps.map((s,i) => <li key={i} className="text-sm text-blue-900 font-medium flex gap-3"><span className="w-6 h-6 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-bold shrink-0">{i+1}</span> {s}</li>) : <li className="text-sm text-blue-900">{result.action_steps}</li>}
-                                                    </ul>
-                                                </div>
-                                                <div className="bg-red-50/80 p-6 rounded-2xl border border-red-200 shadow-sm">
-                                                    <h3 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-4 flex items-center gap-2"><i className="fa-solid fa-flag"></i> Red Flags</h3>
-                                                    <ul className="space-y-3">
-                                                        {Array.isArray(result.red_flags) ? result.red_flags.map((f,i) => <li key={i} className="text-sm text-red-900 font-medium flex gap-3"><i className="fa-solid fa-triangle-exclamation mt-1 text-red-500"></i> {f}</li>) : <li className="text-sm text-red-900">{result.red_flags}</li>}
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                            <div className="pt-6 border-t border-gray-100">
-                                                <div className="flex justify-between items-center mb-4">
-                                                    <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><i className="fa-solid fa-comment-dots text-vinted-500"></i> Anschreiben (Copy & Paste)</h3>
-                                                    <Button variant="ghost" size="sm" onClick={()=>{navigator.clipboard.writeText(result.negotiation_msg); addToast('Kopiert');}} icon="fa-copy">Kopieren</Button>
-                                                </div>
-                                                <div className="bg-white border-2 border-gray-100 p-6 rounded-2xl text-base font-medium text-gray-800 whitespace-pre-wrap shadow-inner-light">{result.negotiation_msg}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Card>
-                            )}
-                            {!result && !loading && (
-                                <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white/50 rounded-3xl border border-dashed border-gray-300">
-                                    <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-gray-300 text-5xl mb-6 shadow-sm border border-gray-100"><i className="fa-solid fa-scale-balanced"></i></div>
-                                    <p className="text-gray-500 font-semibold max-w-sm leading-relaxed">Die KI zerlegt jedes Angebot für dich. Lade Screenshots hoch, kalkuliere deine Marge und vermeide schlechte Deals.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- SNIPER ---
-        const Sniper = () => {
-            const { alerts, actions, addToast } = useAppContext();
-            const [brand, setBrand] = useState("");
-
-            const addAlert = () => {
-                if(!brand.trim()) return addToast("Bitte Suchbegriff eingeben", "warning");
-                actions.addAlert({ brand: brand.trim() });
-                setBrand("");
-                addToast("Suchauftrag angelegt!", "success");
-            };
-
-            const openVinted = (query) => {
-                if(!query) return;
-                window.open(`https://www.vinted.de/vetements?search_text=${encodeURIComponent(query)}&order=newest_first`, '_blank');
-            };
-
-            const openKleinanzeigen = (query) => {
-                if(!query) return;
-                window.open(`https://www.kleinanzeigen.de/s-sortierung:erstellungsdatum/${encodeURIComponent(query).replace(/%20/g, '-')}/k0`, '_blank');
-            };
-
-            return (
-                <div className="p-6 lg:p-12 max-w-5xl mx-auto h-full overflow-y-auto animate-fade-in pb-32">
-                    <div className="mb-10 animate-slide-in-right">
-                        <div className="flex items-center gap-4 mb-3">
-                            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Market Sniper</h1>
-                            <span className="bg-red-100 text-red-700 text-xs font-bold px-3 py-1.5 rounded-lg animate-pulse shadow-sm">LIVE LINKS</span>
-                        </div>
-                        <p className="text-gray-500 font-medium text-lg">Hinterlege Suchbegriffe. Ein Klick öffnet Vinted/Ebay – exakt gefiltert nach "Neueste zuerst". So bist du immer der Erste.</p>
-                    </div>
-
-                    <Card className="p-8 bg-gray-900 text-white mb-10 border-gray-800 shadow-floating animate-slide-up">
-                        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3"><i className="fa-solid fa-crosshairs text-red-500"></i> Neuen Radar Alert anlegen</h2>
-                        <div className="flex flex-col sm:flex-row gap-4">
-                            <input type="text" value={brand} onChange={e=>setBrand(e.target.value)} placeholder="z.B. Carhartt Detroit Jacket" className="flex-1 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-4 text-white placeholder-gray-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 outline-none text-base font-medium transition-all" />
-                            <Button variant="primary" onClick={addAlert} size="lg" className="!bg-red-600 hover:!bg-red-700 !border-red-500 shadow-lg shadow-red-500/20" icon="fa-plus">Alert Speichern</Button>
-                        </div>
-                    </Card>
-
-                    <div className="space-y-5">
-                        <h3 className="font-extrabold text-gray-900 text-xl mb-6">Deine aktiven Snipes</h3>
-                        {alerts.map((a, i) => {
-                            if(!a) return null;
-                            return (
-                                <Card key={a.id || i} className="p-6 flex flex-col sm:flex-row justify-between items-center gap-6 group animate-slide-up" style={{animationDelay: `${i*100}ms`}}>
-                                    <div className="flex items-center gap-4 w-full sm:w-auto min-w-0">
-                                        <div className="w-4 h-4 rounded-full bg-red-500 animate-pulse shrink-0 shadow-[0_0_10px_rgba(239,68,68,0.6)]"></div>
-                                        <p className="font-black text-xl text-gray-900 truncate">{a.brand}</p>
-                                    </div>
-                                    <div className="flex gap-3 w-full sm:w-auto shrink-0">
-                                        <Button onClick={()=>openVinted(a.brand)} className="flex-1 sm:flex-none !bg-vinted-50 hover:!bg-vinted-100 !text-vinted-700 !border-vinted-200" icon="fa-shirt">Vinted</Button>
-                                        <Button onClick={()=>openKleinanzeigen(a.brand)} className="flex-1 sm:flex-none !bg-green-50 hover:!bg-green-100 !text-green-700 !border-green-200" icon="fa-tag">Ebay</Button>
-                                        <Button onClick={()=>actions.deleteAlert(a.id)} className="!bg-gray-50 hover:!bg-red-50 !text-gray-400 hover:!text-red-500 !border-gray-200 hover:!border-red-200" icon="fa-trash"></Button>
-                                    </div>
-                                </Card>
-                            )
-                        })}
-                        {alerts.length === 0 && <EmptyState icon="fa-radar" title="Radar inaktiv" description="Lege Suchbegriffe an, um den Markt zu überwachen und als erster zuzuschlagen." />}
-                    </div>
-                </div>
-            );
-        };
-
-        // --- SHIPPING ROUTE ---
-        const ShippingRoutePlanner = () => {
-            const { routeStops, actions, addToast } = useAppContext();
-            const [startLoc, setStartLoc] = useState("");
-            const [endLoc, setEndLoc] = useState("");
-
-            const addStop = (carrier) => {
-                actions.addRouteStop(carrier);
-                addToast(`${carrier} Halt hinzugefügt`, "success");
-            };
-
-            const openRoute = () => {
-                if(!startLoc.trim()) return addToast("Bitte Startpunkt eingeben", "warning");
-                if((routeStops||[]).length === 0) return addToast("Bitte füge Paketshops hinzu", "warning");
-
-                const origin = encodeURIComponent(startLoc);
-                const destination = endLoc.trim() ? encodeURIComponent(endLoc) : origin;
-                
-                const waypointsList = (routeStops||[]).filter(s=>s && s.carrier).map(s => encodeURIComponent(`${s.carrier} Paketshop`));
-                const waypointsStr = waypointsList.join('|');
-                
-                window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${waypointsStr}`, '_blank');
-                addToast("Google Maps wird geöffnet...", "success");
-            };
-
-            return (
-                <div className="p-6 lg:p-12 max-w-[1400px] mx-auto h-full flex flex-col animate-fade-in pb-32 overflow-y-auto">
-                    <datalist id="orte-vorschlaege">
-                        <option value="Winsen (Luhe)" /><option value="Winsen (Luhe) Bahnhof" /><option value="Lüneburg" /><option value="Hamburg" /><option value="Stelle" /><option value="Ashausen" /><option value="Pattensen" />
-                    </datalist>
-
-                    <div className="mb-10 animate-slide-in-right">
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Smart Routenplaner</h1>
-                        <p className="text-gray-500 mt-2 font-medium text-lg">Plane deine Fahrt, notiere Pakete und lass Google den besten Weg finden.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
-                        <div className="space-y-8 flex flex-col h-full animate-slide-up" style={{animationDelay: '100ms'}}>
-                            <Card className="p-8">
-                                <h2 className="text-xl font-extrabold text-gray-900 mb-6 border-b border-gray-100 pb-4 flex items-center gap-3"><div className="w-8 h-8 rounded-lg bg-vinted-100 text-vinted-600 flex items-center justify-center"><i className="fa-solid fa-map-pin"></i></div> 1. Wegpunkte</h2>
-                                <div className="space-y-5">
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1">Startpunkt (Dein Standort)</label>
-                                        <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><i className="fa-solid fa-location-dot"></i></div>
-                                            <input type="text" list="orte-vorschlaege" value={startLoc} onChange={e=>setStartLoc(e.target.value)} placeholder="Straße, Ort..." className="block w-full rounded-2xl border border-gray-200 bg-white/70 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 transition-all p-4 pl-12 sm:text-sm shadow-inner-light" />
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1">Zielpunkt (Optional)</label>
-                                        <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><i className="fa-solid fa-flag-checkered"></i></div>
-                                            <input type="text" list="orte-vorschlaege" value={endLoc} onChange={e=>setEndLoc(e.target.value)} placeholder="Wenn abweichend vom Start..." className="block w-full rounded-2xl border border-gray-200 bg-white/70 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 transition-all p-4 pl-12 sm:text-sm shadow-inner-light" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </Card>
-
-                            <Card className="p-8 flex-1 flex flex-col">
-                                <h2 className="text-xl font-extrabold text-gray-900 mb-6 border-b border-gray-100 pb-4 flex items-center gap-3"><div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i className="fa-solid fa-store"></i></div> 2. Shops hinzufügen</h2>
-                                
-                                <div className="flex flex-wrap gap-3 mb-8">
-                                    {VINTED_DATA.carriers.map(c => (
-                                        <button key={c} onClick={()=>addStop(c)} className="bg-white border-2 border-gray-200 hover:border-vinted-500 hover:bg-vinted-50 hover:text-vinted-700 px-5 py-2.5 rounded-xl text-sm font-bold text-gray-700 transition-all shadow-sm active:scale-95">
-                                            <i className="fa-solid fa-plus mr-1"></i> {c}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <div className="flex-1 space-y-4 overflow-y-auto no-scrollbar pb-4 min-h-[250px]">
-                                    {(routeStops||[]).map((stop, i) => {
-                                        if(!stop) return null;
-                                        return (
-                                        <div key={stop.id||i} className="bg-white border-2 border-gray-100 rounded-2xl p-5 relative group hover:border-gray-200 transition-colors shadow-sm animate-slide-in-right">
-                                            <button onClick={()=>actions.deleteRouteStop(stop.id)} className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"><i className="fa-solid fa-trash text-sm"></i></button>
-                                            <div className="flex items-center gap-3 mb-4">
-                                                <div className="w-8 h-8 rounded-full bg-vinted-50 text-vinted-600 flex items-center justify-center font-black text-sm">{i+1}</div>
-                                                <h3 className="font-extrabold text-gray-900 text-lg">{stop.carrier} Shop</h3>
-                                            </div>
-                                            <textarea value={stop.notes} onChange={e => actions.updateRouteStop(stop.id, e.target.value)} placeholder={`Welche Pakete müssen hier hin?\nz.B. "Grauer Pulli an Max", "Sneaker an Anna"`} className="w-full bg-gray-50/80 border border-gray-200 rounded-xl p-4 text-sm resize-none outline-none focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 transition-all font-medium text-gray-700 shadow-inner-light" rows="3"></textarea>
-                                        </div>
-                                    )})}
-                                    {(routeStops||[]).length === 0 && (
-                                        <EmptyState icon="fa-route" title="Keine Haltepunkte" description="Klicke oben auf einen Dienstleister, um ihn zur Route hinzuzufügen." />
-                                    )}
-                                </div>
-
-                                <div className="pt-8 border-t border-gray-100 mt-auto flex gap-4">
-                                    <Button variant="secondary" onClick={actions.clearRoute} disabled={(routeStops||[]).length===0} className="px-6" title="Liste leeren" size="lg"><i className="fa-solid fa-trash-can"></i></Button>
-                                    <Button variant="vinted" onClick={openRoute} className="flex-1" size="lg" icon="fa-location-arrow">Maps Route starten</Button>
-                                </div>
-                            </Card>
-                        </div>
-
-                        <div className="animate-slide-up" style={{animationDelay: '200ms'}}>
-                            <Card className="p-10 bg-gray-900 text-white relative overflow-hidden h-full min-h-[500px] flex flex-col justify-center border-gray-800 shadow-floating">
-                                <i className="fa-solid fa-map-location-dot absolute -right-10 -bottom-10 text-[12rem] text-white/5 transform -rotate-12"></i>
-                                <h2 className="text-4xl font-extrabold mb-6 relative z-10 tracking-tight">Stressfreier Versand.</h2>
-                                <p className="text-gray-400 leading-relaxed text-base relative z-10 font-medium">
-                                    Dieser Routenplaner ist dein Logistik-Zentrum.<br/><br/>
-                                    <span className="text-vinted-400 font-bold block mb-3 text-lg">Dein Pro-Workflow:</span>
-                                    <span className="block mb-2"><strong className="text-white">1.</strong> Packe alle deine Bestellungen.</span>
-                                    <span className="block mb-2"><strong className="text-white">2.</strong> Füge für jeden Dienstleister (DHL, Hermes...) einen Halt hinzu.</span>
-                                    <span className="block mb-2"><strong className="text-white">3.</strong> Notiere dir im Textfeld, welches Paket bei welchem Shop abgegeben werden muss. So vertauschst du nie wieder Label!</span>
-                                    <span className="block"><strong className="text-white">4.</strong> Klicke auf Start. Google Maps baut dir automatisch die effizienteste Route.</span>
-                                </p>
-                            </Card>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- PROFIT TRACKER ---
-        const ProfitTracker = () => {
-            const { listings, actions } = useAppContext();
-            const sold = (listings||[]).filter(l => l && l.status === 'sold');
-            
-            // 1000% Sichere Rechnungen
-            const rev = sold.reduce((s, l) => s + parsePrice(l?.price), 0);
-            const cost = sold.reduce((s, l) => s + parsePrice(l?.buy_price), 0);
-            const profit = rev - cost;
-            const margin = rev > 0 ? ((profit / rev) * 100).toFixed(1) : 0;
-
-            return (
-                <div className="p-6 lg:p-12 max-w-7xl mx-auto h-full overflow-y-auto animate-fade-in pb-32">
-                    <div className="mb-10 animate-slide-in-right">
-                        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Kassenbuch</h1>
-                        <p className="text-gray-500 mt-2 font-medium text-lg">Detaillierte Finanzübersicht deiner Reselling-Aktivitäten.</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
-                        <Card className="p-6 bg-white border border-gray-200 hover:-translate-y-1 transition-transform animate-slide-up" style={{animationDelay: '100ms'}}>
-                            <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Umsatz</p>
-                            <h3 className="text-3xl font-black text-gray-900">{rev.toFixed(2)} €</h3>
-                        </Card>
-                        <Card className="p-6 bg-white border border-gray-200 hover:-translate-y-1 transition-transform animate-slide-up" style={{animationDelay: '200ms'}}>
-                            <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Ausgaben</p>
-                            <h3 className="text-3xl font-black text-red-500">{cost.toFixed(2)} €</h3>
-                        </Card>
-                        <Card className="p-6 bg-white border border-gray-200 hover:-translate-y-1 transition-transform animate-slide-up" style={{animationDelay: '300ms'}}>
-                            <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Marge</p>
-                            <h3 className="text-3xl font-black text-vinted-600">{margin}%</h3>
-                        </Card>
-                        <Card className="p-6 bg-gray-900 text-white border border-gray-800 hover:-translate-y-1 transition-transform shadow-floating animate-slide-up" style={{animationDelay: '400ms'}}>
-                            <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">Netto-Gewinn</p>
-                            <h3 className="text-3xl font-black text-white">{profit.toFixed(2)} €</h3>
-                        </Card>
-                    </div>
-
-                    <Card noPadding className="animate-slide-up" style={{animationDelay: '500ms'}}>
-                        <div className="overflow-x-auto no-scrollbar">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-white border-b border-gray-100 shadow-xs">
-                                        <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Verkaufter Artikel</th>
-                                        <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Umsatz</th>
-                                        <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest w-48">Einkaufspreis</th>
-                                        <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest text-right">Gewinn</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50">
-                                    {sold.map((item, i) => {
-                                        if(!item) return null;
-                                        const p = parsePrice(item.price) - parsePrice(item.buy_price);
-                                        return (
-                                            <tr key={item.id||i} className="hover:bg-gray-50/80 transition-colors">
-                                                <td className="px-8 py-5 font-bold text-sm text-gray-900">{item.title || 'Artikel'}</td>
-                                                <td className="px-8 py-5 font-black text-sm text-gray-900">{parsePrice(item.price).toFixed(2)} €</td>
-                                                <td className="px-8 py-5">
-                                                    <div className="relative">
-                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">€</span>
-                                                        <input type="number" value={item.buy_price || ''} placeholder="0.00" onChange={e => actions.updateListing(item.id, { buy_price: e.target.value })} className="w-full pl-9 pr-3 py-2.5 text-sm font-bold border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 shadow-inner-light transition-all bg-gray-50" />
-                                                    </div>
-                                                </td>
-                                                <td className={`px-8 py-5 font-black text-base text-right ${p >= 0 ? 'text-green-600' : 'text-red-500'}`}>{p > 0 ? '+' : ''}{p.toFixed(2)} €</td>
-                                            </tr>
-                                        );
-                                    })}
-                                    {sold.length === 0 && <tr><td colSpan="4"><EmptyState icon="fa-coins" title="Kasse leer" description="Markiere Artikel im Inventar als 'Verkauft', damit sie hier auftauchen." /></td></tr>}
-                                </tbody>
-                            </table>
-                        </div>
-                    </Card>
-                </div>
-            );
-        };
-
-        // --- SMART REPLY ---
+        // --- SMART REPLY (MULTI LANG) ---
         const SmartReply = () => {
             const { addToast, settings } = useAppContext();
             const [price, setPrice] = useState("");
@@ -1476,9 +1067,11 @@
                     </div>
 
                     <div className="space-y-8 animate-slide-up" style={{animationDelay: '100ms'}}>
+                        
                         <Card className="p-8 md:p-10 border-t-4 border-t-vinted-500 shadow-sm">
                             <h2 className="text-xl font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4"><i className="fa-solid fa-hard-drive text-vinted-500 mr-2"></i> Data Management (Backup)</h2>
                             <p className="text-sm text-gray-500 mb-8 font-medium leading-relaxed">Da VintedPro alle Daten lokal in deinem Browser speichert, solltest du regelmäßig ein Backup erstellen. So kannst du deine Daten auf einen anderen PC übertragen oder vor Datenverlust schützen.</p>
+                            
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-inner-light">
                                     <h3 className="font-bold text-gray-900 mb-2">Daten Exportieren</h3>
@@ -1513,100 +1106,90 @@
                                 <p className="text-sm text-blue-900 leading-relaxed font-medium">Dein System testet automatisch Fallback-Modelle mit Exponential Backoff (Schutz vor API-Limits und Abstürzen).</p>
                             </div>
                         </Card>
-                        <div className="flex justify-end pt-4"><Button onClick={save} icon="fa-save" size="lg" className="px-10 shadow-lg">Einstellungen speichern</Button></div>
+
+                        <div className="flex justify-end pt-4">
+                            <Button onClick={save} icon="fa-save" size="lg" className="px-10 shadow-lg">Einstellungen speichern</Button>
+                        </div>
                     </div>
                 </div>
             );
         };
 
         // ==========================================
-        // 5. MAIN APP LAYOUT
+        // 5. MAIN APP LAYOUT (LÜCKENLOS!)
         // ==========================================
         const MainApp = () => {
-            const [view, setView] = useState('dashboard'); 
+            const [view, setView] = useState('analyze'); 
             const [isSidebarOpen, setSidebarOpen] = useState(false);
             const { settings } = useAppContext();
 
-            const menu = [
-                { id: 'dashboard', icon: 'fa-grip', label: 'Dashboard', component: <Dashboard setView={setView} /> },
-                { id: 'analyze', icon: 'fa-wand-magic-sparkles', label: 'Analyse Studio', component: <AnalyzeStudio /> },
-                { id: 'history', icon: 'fa-box-archive', label: 'Inventar', component: <Inventory setView={setView} /> },
-                { id: 'dealchecker', icon: 'fa-scale-balanced', label: 'Deal Checker Pro', component: <DealChecker /> },
-                { id: 'sniper', icon: 'fa-crosshairs', label: 'Sniper & Trends', component: <Sniper /> },
-                { id: 'smartreply', icon: 'fa-comment-dots', label: 'Smart Reply', component: <SmartReply /> },
-                { id: 'shipping', icon: 'fa-route', label: 'Routenplaner', component: <ShippingRoutePlanner /> },
-                { id: 'profit', icon: 'fa-chart-pie', label: 'Profit Tracker', component: <ProfitTracker /> },
-                { id: 'settings', icon: 'fa-gear', label: 'Einstellungen', component: <Settings /> },
-            ];
+            // Sichert ab, dass die App bei undefiniertem View nicht crasht
+            const menu = {
+                dashboard: { icon: 'fa-grip', label: 'Dashboard', component: <Dashboard setView={setView} /> },
+                analyze: { icon: 'fa-wand-magic-sparkles', label: 'Analyse Studio', component: <AnalyzeStudio /> },
+                history: { icon: 'fa-box-archive', label: 'Inventar', component: <Inventory setView={setView} /> },
+                dealchecker: { icon: 'fa-scale-balanced', label: 'Deal Checker Pro', component: <DealChecker /> },
+                sniper: { icon: 'fa-crosshairs', label: 'Sniper & Trends', component: <Sniper /> },
+                smartreply: { icon: 'fa-comment-dots', label: 'Smart Reply', component: <SmartReply /> },
+                shipping: { icon: 'fa-route', label: 'Routenplaner', component: <ShippingRoutePlanner /> },
+                profit: { icon: 'fa-chart-pie', label: 'Profit Tracker', component: <ProfitTracker /> },
+                settings: { icon: 'fa-gear', label: 'Einstellungen', component: <Settings /> },
+            };
 
-            const activeMenu = menu.find(m => m.id === view);
+            const activeComponent = menu[view]?.component || <div className="p-10 text-center"><i className="fa-solid fa-circle-notch fa-spin text-3xl"></i><p className="mt-4 font-bold">Lade Modul...</p></div>;
 
             return (
                 <div className="flex h-screen w-full overflow-hidden bg-transparent relative z-10">
-                    <div className={`fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 transition-opacity duration-400 lg:hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSidebarOpen(false)}></div>
-
-                    <aside className={`fixed lg:relative w-[280px] bg-white/80 backdrop-blur-2xl border-r border-white/50 h-full flex flex-col z-50 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${isSidebarOpen ? 'translate-x-0 shadow-[20px_0_50px_rgba(0,0,0,0.1)]' : '-translate-x-full lg:translate-x-0 lg:shadow-none'}`}>
-                        <div className="h-24 flex items-center px-8 border-b border-gray-200/50 shrink-0 bg-white relative z-10">
-                            <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-md mr-4">
-                                <i className="fa-solid fa-shirt text-base"></i>
-                            </div>
-                            <span className="text-2xl font-extrabold text-gray-900 tracking-tight">Vinted<span className="text-vinted-600">Pro</span></span>
+                    <div className={`fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 transition-opacity lg:hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSidebarOpen(false)}></div>
+                    
+                    <aside className={`fixed lg:relative w-[280px] bg-white/80 backdrop-blur-xl border-r border-white/50 h-full flex flex-col z-50 transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+                        <div className="h-24 flex items-center px-8 border-b border-gray-200/50 shrink-0">
+                            <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white mr-4"><i className="fa-solid fa-shirt"></i></div>
+                            <span className="text-2xl font-extrabold">Vinted<span className="text-vinted-600">Pro</span></span>
                         </div>
-
-                        <nav className="flex-1 py-8 px-4 space-y-1.5 overflow-y-auto no-scrollbar relative z-0">
-                            <div className="px-4 mb-3 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Main Menu</div>
-                            {menu.slice(0, 3).map(item => (
-                                <button key={item.id} onClick={() => { setView(item.id); setSidebarOpen(false); }}
-                                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 font-bold text-sm group ${view === item.id ? 'bg-white text-vinted-600 shadow-sm border border-gray-100' : 'text-gray-500 hover:bg-white/50 hover:text-gray-900 border border-transparent'}`}>
-                                    <i className={`fa-solid ${item.icon} w-6 text-center text-lg ${view === item.id ? 'text-vinted-600' : 'text-gray-400 group-hover:scale-110 transition-transform'}`}></i>
-                                    {item.label}
-                                </button>
-                            ))}
-                            
-                            <div className="px-4 mt-8 mb-3 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Business Tools</div>
-                            {menu.slice(3).map(item => (
-                                <button key={item.id} onClick={() => { setView(item.id); setSidebarOpen(false); }}
-                                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 font-bold text-sm group ${view === item.id ? 'bg-white text-vinted-600 shadow-sm border border-gray-100' : 'text-gray-500 hover:bg-white/50 hover:text-gray-900 border border-transparent'}`}>
-                                    <i className={`fa-solid ${item.icon} w-6 text-center text-lg ${view === item.id ? 'text-vinted-600' : 'text-gray-400 group-hover:scale-110 transition-transform'}`}></i>
-                                    {item.label}
+                        
+                        <nav className="flex-1 py-8 px-4 space-y-1.5 overflow-y-auto no-scrollbar">
+                            <div className="px-4 mb-3 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Tools</div>
+                            {Object.entries(menu).map(([id, item]) => (
+                                <button key={id} onClick={() => { setView(id); setSidebarOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all font-bold text-sm ${view === id ? 'bg-white text-vinted-600 shadow-sm border border-gray-100' : 'text-gray-500 hover:bg-white/50'}`}>
+                                    <i className={`fa-solid ${item.icon} w-6`}></i>{item.label}
                                 </button>
                             ))}
                         </nav>
-                        
+
+                        {/* Vinted Direct Link Global */}
+                        <div className="px-4 pb-4">
+                            <button onClick={()=>window.open('https://www.vinted.de', '_blank')} className="w-full flex items-center justify-center gap-2 bg-vinted-50 hover:bg-vinted-100 text-vinted-700 py-3 rounded-2xl font-bold text-sm transition-colors border border-vinted-200">
+                                <i className="fa-solid fa-arrow-up-right-from-square"></i> Vinted.de öffnen
+                            </button>
+                        </div>
+
                         <div className="p-6 border-t border-gray-200/50">
-                            <div className="flex items-center gap-4 bg-white/60 p-3 rounded-2xl border border-white shadow-sm cursor-pointer hover:bg-white transition-colors group" onClick={()=>setView('settings')}>
-                                <img src={`https://ui-avatars.com/api/?name=${settings?.userName || 'Rico'}&background=f3e8ff&color=9333ea&bold=true`} className="w-10 h-10 rounded-xl shadow-sm group-hover:scale-105 transition-transform" />
+                            <div className="flex items-center gap-4 bg-white/60 p-3 rounded-2xl border border-white shadow-sm cursor-pointer hover:bg-white transition-colors" onClick={()=>setView('settings')}>
+                                <img src={`https://ui-avatars.com/api/?name=${settings?.userName || 'Rico'}&background=f3e8ff&color=9333ea&bold=true`} className="w-10 h-10 rounded-xl" />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-extrabold text-gray-900 truncate">{settings?.userName || 'Rico'}</p>
-                                    <p className="text-[10px] font-bold text-green-500 flex items-center gap-1.5"><i className="fa-solid fa-circle text-[6px] animate-pulse"></i> Pro Account</p>
+                                    <p className="text-sm font-extrabold truncate">{settings?.userName || 'Rico'}</p>
+                                    <p className="text-[10px] font-bold text-green-500"><i className="fa-solid fa-circle animate-pulse"></i> Pro</p>
                                 </div>
                             </div>
                         </div>
                     </aside>
 
                     <main className="flex-1 flex flex-col min-w-0 h-full relative z-0">
-                        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200/50 flex items-center justify-between px-4 shrink-0 lg:hidden z-20 shadow-sm">
-                            <button onClick={() => setSidebarOpen(true)} className="text-gray-600 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors"><i className="fa-solid fa-bars text-lg"></i></button>
-                            <span className="font-bold text-gray-900 text-sm">{activeMenu?.label}</span>
+                        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200/50 flex items-center px-4 shrink-0 lg:hidden z-20">
+                            <button onClick={() => setSidebarOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100"><i className="fa-solid fa-bars text-lg"></i></button>
+                            <span className="font-bold ml-2">{menu[view]?.label}</span>
                             <div className="w-10"></div>
                         </header>
-
                         <div className="flex-1 relative z-10 overflow-hidden">
-                            {activeMenu ? activeMenu.component : <Dashboard setView={setView} />}
+                            {activeComponent}
                         </div>
                     </main>
                 </div>
             );
         };
 
-        const RootApp = () => (
-            <ErrorBoundary>
-                <AppProvider>
-                    <MainApp />
-                </AppProvider>
-            </ErrorBoundary>
-        );
-
+        const RootApp = () => <ErrorBoundary><AppProvider><MainApp /></AppProvider></ErrorBoundary>;
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<RootApp />);
     </script>
