@@ -1,293 +1,152 @@
+```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VintedPro - Ultimate Seller OS</title>
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        vinted: {
-                            50: '#faf5ff', 100: '#f3e8ff', 200: '#e9d5ff',
-                            300: '#d8b4fe', 400: '#c084fc', 500: '#a855f7',
-                            600: '#9333ea', 700: '#7e22ce', 800: '#6b21a8', 900: '#581c87',
-                        }
-                    },
-                    boxShadow: {
-                        'xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                        'sm': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-                        'card': '0 8px 30px rgba(0, 0, 0, 0.04), 0 4px 10px rgba(0, 0, 0, 0.02)',
-                        'inner-light': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.02)',
-                        'floating': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out forwards',
-                        'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                        'slide-in-right': 'slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                    },
-                    keyframes: {
-                        fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
-                        slideUp: { '0%': { opacity: 0, transform: 'translateY(20px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
-                        slideInRight: { '0%': { opacity: 0, transform: 'translateX(30px)' }, '100%': { opacity: 1, transform: 'translateX(0)' } }
-                    }
+                    colors: { vinted: { 50: '#faf5ff', 100: '#f3e8ff', 200: '#e9d5ff', 300: '#d8b4fe', 400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 700: '#7e22ce', 800: '#6b21a8', 900: '#581c87' } },
+                    boxShadow: { 'card': '0 8px 30px rgba(0,0,0,0.04)', 'inner-light': 'inset 0 2px 4px 0 rgba(0,0,0,0.02)', 'floating': '0 20px 25px -5px rgba(0,0,0,0.1)' },
+                    animation: { 'fade-in': 'fadeIn 0.4s ease-out forwards', 'slide-up': 'slideUp 0.5s ease-out forwards', 'slide-in-right': 'slideInRight 0.4s ease-out forwards' },
+                    keyframes: { fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } }, slideUp: { '0%': { opacity: 0, transform: 'translateY(20px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } }, slideInRight: { '0%': { opacity: 0, transform: 'translateX(30px)' }, '100%': { opacity: 1, transform: 'translateX(0)' } } }
                 }
             }
         }
     </script>
-
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
-        body { 
-            background-color: #f4f5f7; 
-            color: #111827; 
-            overflow: hidden; 
-            -webkit-tap-highlight-color: transparent;
-        }
+        body { background-color: #f4f5f7; color: #111827; overflow: hidden; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         *:focus-visible { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #d8b4fe; }
-        
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #9333ea; cursor: pointer; margin-top: -8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.1s; }
-        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #9333ea; cursor: pointer; margin-top: -8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #e5e7eb; border-radius: 4px; }
-        
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
     </style>
 </head>
-<body class="h-screen w-screen font-sans text-gray-900 selection:bg-vinted-200 selection:text-vinted-900 relative">
-    
-    <div id="root" class="h-full w-full relative z-10"></div>
-
+<body class="h-screen w-screen font-sans text-gray-900">
+    <div id="root" class="h-full w-full"></div>
     <script type="text/babel">
-        const { useState, useEffect, createContext, useContext, Component, useRef } = React;
+        const { useState, useEffect, createContext, useContext, Component } = React;
 
-        // ==========================================
-        // 0. ABSOLUTE ROBUSTHEIT & ERROR BOUNDARY
-        // ==========================================
+        // 1. ROBUST PARSING & ERROR BOUNDARY
         const parsePrice = (val) => {
-            if (val === undefined || val === null || val === '') return 0;
+            if (!val) return 0;
             if (typeof val === 'number') return isNaN(val) ? 0 : val;
-            const cleaned = String(val).replace(/[^\d.,-]/g, '').replace(',', '.');
-            const num = parseFloat(cleaned);
+            const num = parseFloat(String(val).replace(/[^\d.,-]/g, '').replace(',', '.'));
             return isNaN(num) ? 0 : num;
         };
 
         class ErrorBoundary extends Component {
-            constructor(props) { super(props); this.state = { hasError: false, error: null, errorInfo: null }; }
+            constructor(props) { super(props); this.state = { hasError: false, error: null }; }
             static getDerivedStateFromError(error) { return { hasError: true, error }; }
-            componentDidCatch(error, errorInfo) { this.setState({ errorInfo }); }
-            
             render() {
-                if (this.state.hasError) {
-                    return (
-                        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-8 text-center relative z-50">
-                            <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-6 shadow-sm border border-red-200">
-                                <i className="fa-solid fa-shield-cat text-4xl text-red-500"></i>
-                            </div>
-                            <h1 className="text-3xl font-extrabold text-gray-900 mb-2">System Error Guard</h1>
-                            <p className="text-gray-600 mb-6 max-w-lg font-medium">Die App hat sich vor einem Absturz geschützt. Die Ursache war ein defekter Datensatz. Ein Klick auf den Button repariert das System.</p>
-                            
-                            <div className="bg-white p-4 rounded-xl shadow-sm border border-red-200 text-left max-w-2xl w-full mb-8">
-                                <p className="font-bold text-red-600 text-sm mb-2">Technischer Fehlerbericht:</p>
-                                <textarea readOnly className="w-full h-32 p-3 bg-red-50 text-red-800 text-xs font-mono rounded-lg border border-red-100 resize-none outline-none" value={`${this.state.error?.toString()}\n\n${this.state.errorInfo?.componentStack}`}></textarea>
-                            </div>
-                            
-                            <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-gray-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl shadow-floating transition-all hover:-translate-y-1">
-                                <i className="fa-solid fa-rotate-right mr-2"></i> Alles reparieren & Neu laden
-                            </button>
-                        </div>
-                    );
-                }
+                if (this.state.hasError) return (
+                    <div className="h-screen w-screen flex flex-col items-center justify-center bg-gray-50 p-8 text-center">
+                        <i className="fa-solid fa-shield-cat text-6xl text-red-500 mb-6"></i>
+                        <h1 className="text-3xl font-extrabold mb-2">System Error Guard</h1>
+                        <p className="text-gray-500 mb-6">Crash abgefangen. Bitte Cache leeren.</p>
+                        <p className="text-xs text-red-400 mb-6 max-w-lg">{String(this.state.error)}</p>
+                        <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-gray-900 text-white font-bold py-4 px-8 rounded-2xl"><i className="fa-solid fa-rotate-right mr-2"></i> Cache leeren & Neustarten</button>
+                    </div>
+                );
                 return this.props.children; 
             }
         }
 
-        // ==========================================
-        // 1. CONFIG & API 
-        // ==========================================
+        // 2. CONFIG & API
         const API_KEY = "AIzaSyBIcM5Tr0Z0FNTLObfQnJGmoY0JkqGblew";
-
         const VINTED_DATA = {
-            categories: ["Damenbekleidung", "Herrenbekleidung", "Sneaker & Schuhe", "Vintage & Y2K", "Taschen & Accessoires", "Kinder & Baby", "Home & Deko", "Elektronik", "Sonstiges"],
+            categories: ["Damenbekleidung", "Herrenbekleidung", "Sneaker & Schuhe", "Vintage & Y2K", "Taschen", "Kinder & Baby", "Home & Deko", "Elektronik", "Sonstiges"],
             conditions: ["Neu mit Etikett", "Neu ohne Etikett", "Sehr gut", "Gut", "Zufriedenstellend"],
-            colors: ["Schwarz", "Weiß", "Grau", "Blau", "Rot", "Grün", "Gelb", "Braun", "Beige", "Lila", "Pink", "Gold", "Silber", "Mehrfarbig"],
-            materials: ["Nicht angegeben", "100% Baumwolle", "Polyester", "Leder", "Kunstleder", "Seide", "Leinen", "Wolle", "Denim", "Mischgewebe"],
-            carriers: ["DHL", "Hermes", "GLS", "DPD", "PostAT"]
+            colors: ["Schwarz", "Weiß", "Grau", "Blau", "Rot", "Grün", "Gelb", "Braun", "Beige", "Lila", "Pink", "Mehrfarbig"],
+            materials: ["Nicht angegeben", "100% Baumwolle", "Polyester", "Leder", "Seide", "Leinen", "Wolle", "Denim", "Mischgewebe"],
+            carriers: ["DHL", "Hermes", "GLS", "DPD"]
         };
 
-        const fileToBase64 = (file) => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve({ mimeType: file.type, data: reader.result.split(',')[1] });
-            reader.onerror = error => reject(error);
-        });
+        const fileToBase64 = (file) => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => res({ mimeType: file.type, data: r.result.split(',')[1] }); r.onerror = rej; });
 
-        // Flohmarkt-bereiter API Call mit maximaler Fehler-Toleranz
-        const callGemini = async (prompt, images = [], customModel = "gemini-1.5-flash") => {
-            if (!navigator.onLine) {
-                throw new Error("Keine Internetverbindung! Bitte prüfe dein Netz auf dem Flohmarkt.");
-            }
-
-            const modelsToTry = [customModel || 'gemini-1.5-flash', 'gemini-flash-latest'];
-            let lastError = null;
-
-            for (const model of modelsToTry) {
+        const callGemini = async (prompt, images = [], customModel) => {
+            if (!navigator.onLine) throw new Error("Kein Internet! Prüfe deinen Empfang auf dem Flohmarkt.");
+            const models = [customModel || 'gemini-1.5-flash', 'gemini-flash-latest'];
+            let lastErr = null;
+            for (const model of models) {
                 try {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
-                    const parts = [{ text: prompt }];
-                    images.forEach(img => parts.push({ inlineData: { mimeType: img.mimeType, data: img.data } }));
-
-                    const response = await fetch(url, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: "application/json" } })
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`, {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, ...images.map(img => ({ inlineData: { mimeType: img.mimeType, data: img.data } }))] }], generationConfig: { responseMimeType: "application/json" } })
                     });
-
-                    if (!response.ok) {
-                        const err = await response.json().catch(()=>({}));
-                        if (response.status === 429 || response.status >= 500) {
-                            await new Promise(r => setTimeout(r, 2000));
-                            lastError = new Error(`Rate Limit / Server überlastet (${response.status})`);
-                            continue; 
-                        }
-                        throw new Error(err.error?.message || `HTTP ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    if(!data?.candidates?.[0]?.content) throw new Error("Leere Antwort der KI. (Netzwerkfehler?)");
-                    
+                    if (!res.ok) { if (res.status === 429) { await new Promise(r => setTimeout(r, 2000)); continue; } throw new Error(`HTTP ${res.status}`); }
+                    const data = await res.json();
+                    if(!data?.candidates?.[0]?.content) throw new Error("Leere KI-Antwort.");
                     let text = data.candidates[0].content.parts[0].text;
                     const match = text.match(/\{[\s\S]*\}/);
-                    if (match) return JSON.parse(match[0]);
-                    return JSON.parse(text);
-
-                } catch (error) {
-                    lastError = error;
-                }
+                    return JSON.parse(match ? match[0] : text);
+                } catch (e) { lastErr = e; }
             }
-            throw new Error(`Verbindungsfehler zur KI. Letzter Fehler: ${lastError?.message}`);
+            throw new Error(`KI-Server überlastet. ${lastErr?.message}`);
         };
 
-        // ==========================================
-        // 2. STATE MANAGEMENT (v18 - Clean Wipe)
-        // ==========================================
+        // 3. STATE MANAGEMENT
         const AppContext = createContext(null);
-        
         const AppProvider = ({ children }) => {
             const [toasts, setToasts] = useState([]);
-            
-            const useStickyState = (defaultValue, key) => {
-                const [value, setValue] = useState(() => {
+            const useStickyState = (def, key) => {
+                const [val, setVal] = useState(() => {
                     try {
-                        const sticky = window.localStorage.getItem(key);
-                        if (sticky) {
-                            const parsed = JSON.parse(sticky);
-                            if (Array.isArray(defaultValue)) {
-                                return Array.isArray(parsed) ? parsed.filter(Boolean) : defaultValue;
-                            }
-                            if(typeof parsed === 'object' && parsed !== null) return {...defaultValue, ...parsed};
-                            return parsed;
-                        }
+                        const s = window.localStorage.getItem(key);
+                        if (s) { const p = JSON.parse(s); if(Array.isArray(def)) return Array.isArray(p)?p.filter(Boolean):def; return typeof p==='object'&&p!==null?{...def,...p}:p; }
                     } catch (e) { window.localStorage.removeItem(key); }
-                    return defaultValue;
+                    return def;
                 });
-                useEffect(() => { try { window.localStorage.setItem(key, JSON.stringify(value)); } catch(e){} }, [key, value]);
-                return [value, setValue];
+                useEffect(() => { try { window.localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }, [key, val]);
+                return [val, setVal];
             };
 
-            const [listings, setListings] = useStickyState([], 'vpro_listings_v18');
-            const [alerts, setAlerts] = useStickyState([], 'vpro_alerts_v18');
-            const [routeStops, setRouteStops] = useStickyState([], 'vpro_routes_v18');
-            const [settings, setSettings] = useStickyState({ userName: 'Rico', signature: 'LG Rico 😁', apiModel: 'gemini-1.5-flash' }, 'vpro_settings_v18');
+            const [listings, setListings] = useStickyState([], 'vpro_listings_v20');
+            const [alerts, setAlerts] = useStickyState([], 'vpro_alerts_v20');
+            const [routeStops, setRouteStops] = useStickyState([], 'vpro_routes_v20');
+            const [settings, setSettings] = useStickyState({ userName: 'Rico', signature: 'LG Rico 😁', apiModel: 'gemini-1.5-flash' }, 'vpro_settings_v20');
 
-            const addToast = (message, type = 'success') => {
-                const id = Date.now();
-                setToasts(prev => [...prev, { id, message, type }]);
-                setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
-            };
-
+            const addToast = (msg, type = 'success') => { const id = Date.now(); setToasts(p => [...p, { id, msg, type }]); setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000); };
             const actions = {
-                addListing: (l) => setListings(prev => [l, ...(Array.isArray(prev) ? prev.filter(Boolean) : [])]),
-                updateListing: (id, u) => setListings(prev => (Array.isArray(prev) ? prev.filter(Boolean) : []).map(l => l?.id === id ? { ...l, ...u } : l)),
-                deleteListing: (id) => setListings(prev => (Array.isArray(prev) ? prev.filter(Boolean) : []).filter(l => l?.id !== id)),
-                
-                addAlert: (a) => setAlerts(prev => [{...a, id: Date.now()}, ...(Array.isArray(prev) ? prev.filter(Boolean) : [])]),
-                deleteAlert: (id) => setAlerts(prev => (Array.isArray(prev) ? prev.filter(Boolean) : []).filter(a => a?.id !== id)),
-
-                addRouteStop: (carrier) => setRouteStops(prev => [...(Array.isArray(prev) ? prev.filter(Boolean) : []), { id: Date.now(), carrier, notes: '' }]),
-                updateRouteStop: (id, notes) => setRouteStops(prev => (Array.isArray(prev) ? prev.filter(Boolean) : []).map(s => s?.id === id ? {...s, notes} : s)),
-                deleteRouteStop: (id) => setRouteStops(prev => (Array.isArray(prev) ? prev.filter(Boolean) : []).filter(s => s?.id !== id)),
+                addListing: (l) => setListings(p => [l, ...(Array.isArray(p)?p.filter(Boolean):[])]),
+                updateListing: (id, u) => setListings(p => (Array.isArray(p)?p.filter(Boolean):[]).map(l => l?.id === id ? { ...l, ...u } : l)),
+                deleteListing: (id) => setListings(p => (Array.isArray(p)?p.filter(Boolean):[]).filter(l => l?.id !== id)),
+                addAlert: (a) => setAlerts(p => [{...a, id: Date.now()}, ...(Array.isArray(p)?p.filter(Boolean):[])]),
+                deleteAlert: (id) => setAlerts(p => (Array.isArray(p)?p.filter(Boolean):[]).filter(a => a?.id !== id)),
+                addRouteStop: (carrier) => setRouteStops(p => [...(Array.isArray(p)?p.filter(Boolean):[]), { id: Date.now(), carrier, notes: '' }]),
+                updateRouteStop: (id, notes) => setRouteStops(p => (Array.isArray(p)?p.filter(Boolean):[]).map(s => s?.id === id ? {...s, notes} : s)),
+                deleteRouteStop: (id) => setRouteStops(p => (Array.isArray(p)?p.filter(Boolean):[]).filter(s => s?.id !== id)),
                 clearRoute: () => setRouteStops([]),
-
-                updateSettings: (u) => setSettings(prev => ({...(prev||{}), ...u})),
-
-                exportData: () => {
-                    try {
-                        const data = { listings: listings.filter(Boolean), alerts: alerts.filter(Boolean), routeStops: routeStops.filter(Boolean), settings };
-                        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `VintedPro_Backup_${new Date().toISOString().split('T')[0]}.json`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                        addToast("Backup erfolgreich heruntergeladen!", "success");
-                    } catch(e) { addToast("Fehler beim Exportieren", "error"); }
-                },
-                importData: (jsonData) => {
-                    try {
-                        if(jsonData.listings && Array.isArray(jsonData.listings)) setListings(jsonData.listings.filter(Boolean));
-                        if(jsonData.alerts && Array.isArray(jsonData.alerts)) setAlerts(jsonData.alerts.filter(Boolean));
-                        if(jsonData.routeStops && Array.isArray(jsonData.routeStops)) setRouteStops(jsonData.routeStops.filter(Boolean));
-                        if(jsonData.settings) setSettings(prev => ({...prev, ...jsonData.settings}));
-                        
-                        addToast("Daten importiert! Lade neu...", "success");
-                        setTimeout(() => window.location.reload(), 1500);
-                    } catch(e) { addToast("Fehlerhafte Backup-Datei.", "error"); }
-                }
+                updateSettings: (u) => setSettings(p => ({...(p||{}), ...u})),
+                exportData: () => { try { const blob = new Blob([JSON.stringify({ listings: listings.filter(Boolean), alerts: alerts.filter(Boolean), routeStops: routeStops.filter(Boolean), settings }, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `VintedPro_Backup.json`; a.click(); URL.revokeObjectURL(a.href); addToast("Export erfolgreich!"); } catch(e){ addToast("Fehler beim Export", "error"); } },
+                importData: (jd) => { try { if(jd.listings) setListings(jd.listings.filter(Boolean)); if(jd.alerts) setAlerts(jd.alerts.filter(Boolean)); if(jd.routeStops) setRouteStops(jd.routeStops.filter(Boolean)); if(jd.settings) setSettings(p => ({...p, ...jd.settings})); addToast("Importiert! Lade neu..."); setTimeout(() => window.location.reload(), 1500); } catch(e) { addToast("Defekte Datei", "error"); } }
             };
 
             return (
-                <AppContext.Provider value={{ 
-                    listings: Array.isArray(listings) ? listings.filter(Boolean) : [], 
-                    alerts: Array.isArray(alerts) ? alerts.filter(Boolean) : [], 
-                    routeStops: Array.isArray(routeStops) ? routeStops.filter(Boolean) : [], 
-                    settings: settings || { userName: 'Rico', signature: 'LG Rico 😁', apiModel: 'gemini-1.5-flash' }, 
-                    actions, 
-                    addToast 
-                }}>
+                <AppContext.Provider value={{ listings: Array.isArray(listings)?listings.filter(Boolean):[], alerts: Array.isArray(alerts)?alerts.filter(Boolean):[], routeStops: Array.isArray(routeStops)?routeStops.filter(Boolean):[], settings: settings||{}, actions, addToast }}>
                     {children}
                     <div className="fixed bottom-6 right-6 z-[999] flex flex-col gap-3 pointer-events-none">
                         {toasts.map(t => (
-                            <div key={t.id} className="animate-slide-up glass-effect bg-white/95 text-gray-900 px-5 py-4 rounded-2xl shadow-floating flex items-center gap-4 pointer-events-auto border-l-4 w-80 md:w-96" style={{borderLeftColor: t.type === 'error' ? '#ef4444' : t.type === 'warning' ? '#f59e0b' : '#10b981'}}>
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${t.type === 'error' ? 'bg-red-100 text-red-500' : t.type === 'warning' ? 'bg-amber-100 text-amber-500' : 'bg-green-100 text-green-500'}`}>
-                                    <i className={`fa-solid ${t.type === 'error' ? 'fa-xmark' : t.type === 'warning' ? 'fa-exclamation' : 'fa-check'}`}></i>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-sm leading-tight">{t.message}</p>
-                                </div>
+                            <div key={t.id} className="animate-slide-up bg-white/95 px-5 py-4 rounded-2xl shadow-floating flex items-center gap-4 pointer-events-auto border-l-4 w-80" style={{borderLeftColor: t.type === 'error' ? '#ef4444' : t.type === 'warning' ? '#f59e0b' : '#10b981'}}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${t.type === 'error' ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-500'}`}><i className={`fa-solid ${t.type === 'error' ? 'fa-xmark' : 'fa-check'}`}></i></div>
+                                <p className="font-bold text-sm text-gray-900">{t.msg}</p>
                             </div>
                         ))}
                     </div>
@@ -296,83 +155,35 @@
         };
         const useAppContext = () => useContext(AppContext);
 
-        // ==========================================
-        // 3. UI COMPONENTS
-        // ==========================================
-        const Card = ({ children, className = "", noPadding = false, onClick, style={} }) => (
-            <div onClick={onClick} style={style} className={`bg-white rounded-3xl shadow-card border border-gray-100 overflow-hidden ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all' : ''} ${noPadding ? '' : 'p-6 md:p-8'} ${className}`}>
-                {children}
-            </div>
-        );
-
-        const Button = ({ children, onClick, variant = 'primary', icon, loading = false, className = "", disabled = false, size="md", type="button" }) => {
-            const variants = {
-                primary: "bg-gray-900 hover:bg-black text-white shadow-md",
-                vinted: "bg-vinted-600 hover:bg-vinted-700 text-white shadow-md shadow-vinted-500/20 border border-vinted-500/50",
-                secondary: "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 shadow-sm",
-                ghost: "bg-transparent hover:bg-gray-100/50 text-gray-600 hover:text-gray-900",
-                danger: "bg-red-50 hover:bg-red-100 text-red-600 border border-red-100"
-            };
-            const sizes = { sm: "py-2 px-4 text-xs rounded-xl", md: "py-3 px-6 text-sm rounded-2xl", lg: "py-4 px-8 text-base rounded-2xl" };
-            return (
-                <button type={type} onClick={onClick} disabled={disabled || loading} className={`relative flex items-center justify-center font-bold transition-all duration-200 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed group ${variants[variant]} ${sizes[size]} ${className}`}>
-                    {loading && <div className="absolute inset-0 flex items-center justify-center bg-inherit z-10 rounded-inherit"><i className="fa-solid fa-circle-notch fa-spin text-lg"></i></div>}
-                    <span className={`flex items-center gap-2 relative z-10 ${loading ? 'opacity-0' : 'opacity-100'}`}>
-                        {icon && <i className={`fa-solid ${icon}`}></i>} <span>{children}</span>
-                    </span>
-                </button>
-            );
+        // 4. UI COMPONENTS
+        const Card = ({ children, className = "", noPadding = false, onClick }) => <div onClick={onClick} className={`bg-white rounded-3xl shadow-card border border-gray-100 overflow-hidden ${onClick ? 'cursor-pointer hover:-translate-y-1 transition-transform' : ''} ${noPadding ? '' : 'p-6 md:p-8'} ${className}`}>{children}</div>;
+        const Button = ({ children, onClick, variant = 'primary', icon, loading = false, className = "", disabled = false, size="md" }) => {
+            const v = { primary: "bg-gray-900 hover:bg-black text-white", vinted: "bg-vinted-600 hover:bg-vinted-700 text-white", secondary: "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200", danger: "bg-red-50 hover:bg-red-100 text-red-600" };
+            const s = { sm: "py-2 px-4 text-xs rounded-xl", md: "py-3 px-6 text-sm rounded-2xl", lg: "py-4 px-8 text-base rounded-2xl" };
+            return <button onClick={onClick} disabled={disabled || loading} className={`relative flex items-center justify-center font-bold transition-all active:scale-95 disabled:opacity-60 shadow-sm ${v[variant]} ${s[size]} ${className}`}>{loading ? <i className="fa-solid fa-circle-notch fa-spin text-lg"></i> : <span className="flex items-center gap-2">{icon && <i className={`fa-solid ${icon}`}></i>} <span>{children}</span></span>}</button>;
         };
-
         const Input = ({ label, type="text", value, onChange, placeholder, icon, multiline=false, rows=4, className="", disabled=false, list }) => (
             <div className={`flex flex-col gap-1.5 ${className}`}>
                 {label && <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1">{label}</label>}
                 <div className="relative group">
-                    {icon && <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-vinted-500 transition-colors"><i className={`fa-solid ${icon}`}></i></div>}
-                    {multiline ? (
-                        <textarea rows={rows} value={value} onChange={onChange} disabled={disabled} placeholder={placeholder} className={`block w-full rounded-2xl border border-gray-200 bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 transition-all p-3.5 sm:text-sm shadow-inner-light ${icon ? 'pl-11' : ''} resize-none ${disabled?'opacity-50':''}`}></textarea>
-                    ) : (
-                        <input type={type} value={value} onChange={onChange} disabled={disabled} placeholder={placeholder} list={list} className={`block w-full rounded-2xl border border-gray-200 bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 transition-all p-3.5 sm:text-sm shadow-inner-light ${icon ? 'pl-11' : ''} ${disabled?'opacity-50':''}`} />
-                    )}
+                    {icon && <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><i className={`fa-solid ${icon}`}></i></div>}
+                    {multiline ? <textarea rows={rows} value={value} onChange={onChange} disabled={disabled} placeholder={placeholder} className={`block w-full rounded-2xl border border-gray-200 bg-gray-50/50 p-3.5 sm:text-sm resize-none outline-none focus:bg-white focus:border-vinted-500 ${icon?'pl-11':''} ${disabled?'opacity-50':''}`}></textarea> : <input type={type} value={value} onChange={onChange} disabled={disabled} placeholder={placeholder} list={list} className={`block w-full rounded-2xl border border-gray-200 bg-gray-50/50 p-3.5 sm:text-sm outline-none focus:bg-white focus:border-vinted-500 ${icon?'pl-11':''} ${disabled?'opacity-50':''}`} />}
                 </div>
             </div>
         );
-
-        const Select = ({ label, value, onChange, options, icon, className="" }) => (
-            <div className={`flex flex-col gap-1.5 ${className}`}>
+        const Select = ({ label, value, onChange, options, icon }) => (
+            <div className="flex flex-col gap-1.5">
                 {label && <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1">{label}</label>}
-                <div className="relative group">
-                    {icon && <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-vinted-500 transition-colors"><i className={`fa-solid ${icon}`}></i></div>}
-                    <select value={value} onChange={onChange} className={`appearance-none block w-full rounded-2xl border border-gray-200 bg-gray-50/50 text-gray-900 font-semibold focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 transition-all p-3.5 pr-10 sm:text-sm shadow-inner-light ${icon ? 'pl-11' : ''} cursor-pointer`}>
-                        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                    </select>
+                <div className="relative">
+                    {icon && <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><i className={`fa-solid ${icon}`}></i></div>}
+                    <select value={value} onChange={onChange} className={`appearance-none block w-full rounded-2xl border border-gray-200 bg-gray-50/50 font-semibold p-3.5 pr-10 sm:text-sm outline-none focus:bg-white focus:border-vinted-500 ${icon?'pl-11':''}`}>{options.map(o => <option key={o} value={o}>{o}</option>)}</select>
                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400"><i className="fa-solid fa-chevron-down text-xs"></i></div>
                 </div>
             </div>
         );
 
-        const Badge = ({ children, color = 'gray', className = "" }) => {
-            const colors = {
-                gray: "bg-gray-100 text-gray-700 border-gray-200", green: "bg-green-50 text-green-700 border-green-200",
-                vinted: "bg-vinted-50 text-vinted-700 border-vinted-200", amber: "bg-amber-50 text-amber-700 border-amber-200",
-                red: "bg-red-50 text-red-700 border-red-200", blue: "bg-blue-50 text-blue-700 border-blue-200"
-            };
-            return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold border ${colors[color]} ${className}`}>{children}</span>;
-        };
-
-        const EmptyState = ({ icon, title, description, action }) => (
-            <div className="py-16 px-6 text-center flex flex-col items-center justify-center bg-white/50 rounded-3xl border border-dashed border-gray-300">
-                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-gray-300 text-4xl mb-4 shadow-sm border border-gray-100">
-                    <i className={`fa-solid ${icon}`}></i>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-                <p className="text-sm text-gray-500 max-w-sm mb-6 leading-relaxed font-medium">{description}</p>
-                {action}
-            </div>
-        );
-
         // ==========================================
-        // 4. VIEWS
+        // 5. MODULE / VIEWS
         // ==========================================
 
         // --- DASHBOARD ---
@@ -380,100 +191,49 @@
             const { listings, settings } = useAppContext();
             const active = listings.filter(l => l?.status === 'active');
             const sold = listings.filter(l => l?.status === 'sold');
-            
             const revenue = sold.reduce((acc, curr) => acc + parsePrice(curr?.price), 0);
             const activeValue = active.reduce((acc, curr) => acc + parsePrice(curr?.price), 0);
-            const conversionRate = listings.length ? Math.round((sold.length / listings.length) * 100) : 0;
-            const recent = [...listings].filter(l => l?.title).sort((a,b) => new Date(b?.date || 0) - new Date(a?.date || 0)).slice(0, 4);
+            const recent = [...listings].sort((a,b) => new Date(b?.date || 0) - new Date(a?.date || 0)).slice(0, 4);
 
             return (
-                <div className="p-6 lg:p-12 max-w-[1600px] mx-auto h-full overflow-y-auto animate-fade-in no-scrollbar pb-32">
+                <div className="p-6 lg:p-12 max-w-[1600px] mx-auto h-full overflow-y-auto animate-fade-in pb-32">
                     <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
-                        <div>
-                            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Übersicht</h1>
-                            <p className="text-gray-500 mt-2 font-medium text-lg">Willkommen zurück im Cockpit, {settings?.userName || 'Rico'}.</p>
-                        </div>
-                        <Button variant="vinted" onClick={()=>setView('analyze')} icon="fa-plus" size="lg" className="animate-slide-up" style={{animationDelay: '100ms'}}>Neues Inserat</Button>
+                        <div><h1 className="text-4xl font-extrabold text-gray-900">Übersicht</h1><p className="text-gray-500 mt-2 font-medium">Willkommen zurück, {settings?.userName || 'Rico'}.</p></div>
+                        <Button variant="vinted" onClick={()=>setView('analyze')} icon="fa-plus" size="lg">Neues Inserat</Button>
                     </div>
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
-                        {[
-                            { title: 'Aktiv im Store', val: active.length, sub: `~ ${activeValue.toFixed(0)}€ Wert`, icon: 'fa-boxes-stacked', color: 'blue' },
-                            { title: 'Verkauft', val: sold.length, sub: `${conversionRate}% Conversion`, icon: 'fa-handshake', color: 'green' },
-                            { title: 'Inventar gesamt', val: listings.length, sub: 'Gelistete Artikel', icon: 'fa-box-archive', color: 'amber' },
-                            { title: 'Gesamtumsatz', val: `${revenue.toFixed(2)} €`, sub: 'Brutto Erlös', icon: 'fa-sack-dollar', color: 'vinted', dark: true }
-                        ].map((stat, i) => (
-                            <Card key={i} className={`flex flex-col justify-between group p-6 animate-slide-up ${stat.dark ? 'bg-gray-900 text-white border-gray-800' : ''}`} style={{animationDelay: `${(i+2)*100}ms`}}>
-                                <div className="flex justify-between items-start mb-6">
-                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-transform duration-300 group-hover:scale-110 ${stat.dark ? 'bg-gray-800 text-white border-gray-700' : `bg-${stat.color}-50 text-${stat.color}-600 border-${stat.color}-100`}`}>
-                                        <i className={`fa-solid ${stat.icon} text-2xl`}></i>
-                                    </div>
-                                </div>
-                                <div className="relative z-10">
-                                    <p className={`text-sm font-bold mb-1 ${stat.dark ? 'text-gray-400' : 'text-gray-500'}`}>{stat.title}</p>
-                                    <div className="flex items-baseline gap-2">
-                                        <h3 className={`text-3xl md:text-4xl font-black ${stat.dark ? 'text-white' : 'text-gray-900'}`}>{stat.val}</h3>
-                                        <span className={`text-xs font-semibold ${stat.dark ? 'text-gray-500' : 'text-gray-400'}`}>{stat.sub}</span>
-                                    </div>
-                                </div>
-                            </Card>
-                        ))}
+                        <Card className="flex flex-col justify-between p-6"><div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4"><i className="fa-solid fa-boxes-stacked text-xl"></i></div><p className="text-sm font-bold text-gray-500">Aktiv im Store</p><h3 className="text-3xl font-black">{active.length} <span className="text-sm font-medium text-gray-400">({activeValue.toFixed(0)}€)</span></h3></Card>
+                        <Card className="flex flex-col justify-between p-6"><div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mb-4"><i className="fa-solid fa-handshake text-xl"></i></div><p className="text-sm font-bold text-gray-500">Verkauft</p><h3 className="text-3xl font-black">{sold.length}</h3></Card>
+                        <Card className="flex flex-col justify-between p-6"><div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4"><i className="fa-solid fa-box-archive text-xl"></i></div><p className="text-sm font-bold text-gray-500">Inventar gesamt</p><h3 className="text-3xl font-black">{listings.length}</h3></Card>
+                        <Card className="flex flex-col justify-between bg-gray-900 text-white p-6"><div className="w-12 h-12 rounded-2xl bg-gray-800 text-white border border-gray-700 flex items-center justify-center mb-4"><i className="fa-solid fa-sack-dollar text-xl"></i></div><p className="text-sm font-bold text-gray-400">Gesamtumsatz</p><h3 className="text-3xl font-black">{revenue.toFixed(2)} €</h3></Card>
                     </div>
-
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <Card className="flex flex-col p-8 animate-slide-up" style={{animationDelay: '600ms'}}>
-                            <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
-                                <h3 className="text-xl font-extrabold text-gray-900">Letzte Aktivitäten</h3>
-                                <Button variant="ghost" onClick={()=>setView('history')} className="!p-0 text-vinted-600">Alle ansehen</Button>
-                            </div>
-                            <div className="space-y-4 flex-1">
-                                {recent.map((item, i) => {
-                                    if(!item) return null;
-                                    return (
-                                    <div key={item.id || i} className="flex items-center gap-4 bg-white/60 p-4 rounded-2xl border border-gray-100 hover:bg-white hover:shadow-sm hover:-translate-y-0.5 transition-all duration-300 animate-slide-in-right" style={{animationDelay: `${i*100}ms`}}>
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner-light ${item.status === 'sold' ? 'bg-green-100 text-green-600' : 'bg-vinted-100 text-vinted-600'}`}>
-                                            <i className={`fa-solid ${item.status === 'sold' ? 'fa-check' : 'fa-sparkles'} text-lg`}></i>
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-base font-bold text-gray-900 truncate">{item.title || 'Artikel'}</p>
-                                            <p className="text-xs font-bold text-gray-500 mt-0.5">{item.status === 'sold' ? 'Verkauft' : 'Gelistet'} • {item.date ? new Date(item.date).toLocaleDateString() : ''}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-black text-gray-900 text-lg">{parsePrice(item.price).toFixed(2)} €</p>
-                                        </div>
+                        <Card className="flex flex-col p-8">
+                            <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-extrabold text-gray-900">Letzte Aktivitäten</h3></div>
+                            <div className="space-y-4">
+                                {recent.map((item, i) => (
+                                    <div key={item.id||i} className="flex items-center gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.status==='sold'?'bg-green-100 text-green-600':'bg-vinted-100 text-vinted-600'}`}><i className={`fa-solid ${item.status==='sold'?'fa-check':'fa-sparkles'}`}></i></div>
+                                        <div className="flex-1 min-w-0"><p className="font-bold text-gray-900 truncate">{item.title}</p><p className="text-xs font-bold text-gray-500">{item.status==='sold'?'Verkauft':'Gelistet'}</p></div>
+                                        <p className="font-black">{parsePrice(item.price).toFixed(2)} €</p>
                                     </div>
-                                )})}
-                                {recent.length === 0 && <div className="py-12 text-center text-gray-400 font-medium">Noch keine Einträge.</div>}
+                                ))}
+                                {recent.length === 0 && <p className="text-gray-400 text-center py-10">Keine Aktivitäten.</p>}
                             </div>
                         </Card>
-
-                        <div className="space-y-8 animate-slide-up" style={{animationDelay: '700ms'}}>
-                            <Card className="p-8 bg-vinted-50/80 border-vinted-200">
-                                <h3 className="text-xl font-extrabold text-vinted-900 mb-3"><i className="fa-solid fa-graduation-cap text-vinted-600 mr-2"></i> Seller Insight</h3>
-                                <p className="text-sm text-vinted-800 leading-relaxed font-medium">Der Vinted-Algorithmus belohnt gebündelte Uploads zur Prime-Time. Bereite deine Artikel jetzt unter der Woche vor und lade alle Entwürfe am **Sonntag zwischen 19 und 21 Uhr** hoch für maximale Sichtbarkeit!</p>
-                            </Card>
-                            <Card className="p-8">
-                                <h3 className="text-xl font-extrabold text-gray-900 mb-6 border-b border-gray-100 pb-4">Quick Tools</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button onClick={()=>setView('sniper')} className="p-6 rounded-2xl bg-white hover:shadow-md border border-gray-200 text-left transition-all duration-300 hover:-translate-y-1 group">
-                                        <div className="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i className="fa-solid fa-crosshairs text-xl"></i></div>
-                                        <p className="font-bold text-gray-900 text-base">Snipe Radar</p>
-                                        <p className="text-xs text-gray-500 font-medium mt-1">Live Deals finden</p>
-                                    </button>
-                                    <button onClick={()=>setView('shipping')} className="p-6 rounded-2xl bg-white hover:shadow-md border border-gray-200 text-left transition-all duration-300 hover:-translate-y-1 group">
-                                        <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i className="fa-solid fa-route text-xl"></i></div>
-                                        <p className="font-bold text-gray-900 text-base">Routenplaner</p>
-                                        <p className="text-xs text-gray-500 font-medium mt-1">Smarter Versand</p>
-                                    </button>
-                                </div>
-                            </Card>
-                        </div>
+                        <Card className="p-8">
+                            <h3 className="text-xl font-extrabold text-gray-900 mb-6">Quick Tools</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button onClick={()=>setView('sniper')} className="p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 border border-gray-200 text-left"><i className="fa-solid fa-crosshairs text-red-500 mb-2 text-2xl"></i><p className="font-bold">Snipe Radar</p></button>
+                                <button onClick={()=>setView('shipping')} className="p-6 rounded-2xl bg-gray-50 hover:bg-gray-100 border border-gray-200 text-left"><i className="fa-solid fa-route text-blue-500 mb-2 text-2xl"></i><p className="font-bold">Routenplaner</p></button>
+                            </div>
+                        </Card>
                     </div>
                 </div>
             );
         };
 
-        // --- ANALYZE STUDIO (VINTED SPECIFIC & DIREKT UPLOAD) ---
+        // --- ANALYZE STUDIO (INKLUSIVE VINTED DIRECT UPLOAD) ---
         const AnalyzeStudio = () => {
             const { actions, addToast, settings } = useAppContext();
             const [step, setStep] = useState(1);
@@ -481,330 +241,131 @@
             const [loading, setLoading] = useState(false);
             const [result, setResult] = useState(null);
             
-            const [data, setData] = useState({ 
-                category: VINTED_DATA.categories[0], 
-                condition: VINTED_DATA.conditions[2], 
-                color: VINTED_DATA.colors[0], 
-                material: VINTED_DATA.materials[0], 
-                brand: "", 
-                style: "Detailliert",
-                pricingStrategy: "Pessimistisch",
-                deepAnalysis: false
-            });
+            const [data, setData] = useState({ category: VINTED_DATA.categories[0], condition: VINTED_DATA.conditions[2], color: VINTED_DATA.colors[0], material: VINTED_DATA.materials[0], brand: "", style: "Detailliert", pricingStrategy: "Optimistisch", deepAnalysis: false });
 
-            // Cleanup für Memory Leaks bei Bildern
-            useEffect(() => {
-                return () => files.forEach(f => URL.revokeObjectURL(f.preview));
-            }, [files]);
-
-            const handleDrop = (e) => {
-                e.preventDefault();
-                const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-                if(dropped.length) {
-                    dropped.forEach(f => f.preview = URL.createObjectURL(f));
-                    setFiles(prev => [...prev, ...dropped]);
-                }
-            };
+            const handleDrop = (e) => { e.preventDefault(); const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')); if(dropped.length) setFiles(p => [...p, ...dropped]); };
 
             const runAnalysis = async () => {
                 setLoading(true); setStep(3);
                 try {
-                    const b64s = [];
-                    for(let f of files) b64s.push(await fileToBase64(f));
+                    const b64s = []; for(let f of files) b64s.push(await fileToBase64(f));
 
                     const styleInstruction = data.style === 'Detailliert'
-                        ? `Schreibe locker, professionell und ausführlich. Starte zwingend mit "Moin! 👋". Beschreibe Zustand, Material, Farbe und Passform in schönen Sätzen. Beende mit der Signatur: "${settings?.signature || 'LG'}" und einem kurzen rechtlichen Hinweis (Da Privatverkauf: Keine Garantie/Rücknahme).`
-                        : `Schreibe extrem kurz, präzise und minimalistisch im Stichpunkt-Stil für schnelle Lesbarkeit. Nur harte Fakten. Keine Begrüßung, kein Fließtext.`;
+                        ? `Schreibe ausführlich, locker. Starte mit "Moin! 👋". Beende mit der Signatur: "${settings?.signature || ''}" und Privatverkauf-Hinweis.`
+                        : `Schreibe extrem kurz, präzise im Stichpunkt-Stil. Keine Begrüßung.`;
+                    
+                    const priceInstruction = data.pricingStrategy === 'Pessimistisch' ? `Rechne pessimistisch (Quick Flip, untere Marktgrenze).` : `Rechne optimistisch auf maximalen Profit.`;
+                    const deepJson = data.deepAnalysis ? `"detailed_price_breakdown": { "lowest": 15, "highest": 40, "avg_time": "1-2 Wochen", "factors": ["Marke"], "deep_analysis": "Ausführliche Marktanalyse..." }` : `"detailed_price_breakdown": null`;
 
-                    const priceInstruction = data.pricingStrategy === 'Pessimistisch'
-                        ? `Rechne sehr pessimistisch und defensiv, um einen extrem schnellen Verkauf (Quick Flip) zu garantieren. Setze den vorgeschlagenen Preis an die untere Grenze des Marktwertes.`
-                        : `Rechne optimistisch auf maximalen Profit. Setze den Preis höher an, um Verhandlungsspielraum zu haben, aber bleib realistisch.`;
-
-                    const deepJson = data.deepAnalysis 
-                        ? `"detailed_price_breakdown": { "lowest": 15, "highest": 40, "avg_time": "1-2 Wochen", "factors": ["Beliebte Marke", "Farbe"], "deep_analysis": "Sehr ausführliche Marktanalyse zur aktuellen Lage dieses Modells...", "target_audience": "Wer kauft das?", "competition": "Hoch/Mittel/Niedrig" }`
-                        : `"detailed_price_breakdown": null`;
-
-                    const prompt = `Du bist ein Vinted SEO- und Sales-Experte. Analysiere das Angebot.
-                    Kategorie: ${data.category}, Zustand: ${data.condition}, Marke: ${data.brand||'-'}, Farbe: ${data.color}, Material: ${data.material}.
-                    Copywriting-Stil: ${styleInstruction}
-                    Pricing-Strategie: ${priceInstruction}
-
-                    GIB AUSSCHLIESSLICH DIESES JSON ZURÜCK (Nichts anderes): 
-                    {
-                        "title": "Titel max 60 Zeichen, suchoptimiert", 
-                        "description": "Text exakt nach Stil-Vorgabe", 
-                        "suggested_price": 25, 
-                        "price_rationale": "Kurze Begründung", 
-                        ${deepJson},
-                        "image_score": "8/10", 
-                        "image_tips": "Kritische Tipps zu den hochgeladenen Fotos", 
-                        "selling_tips": "Tipp für diese Kategorie", 
-                        "hashtags": "#tags #getrennt"
-                    }`;
+                    const prompt = `Vinted SEO-Experte. Analysiere Angebot: Kat: ${data.category}, Zust: ${data.condition}, Marke: ${data.brand||'-'}, Farbe: ${data.color}, Mat: ${data.material}.
+                    Copywriting-Stil: ${styleInstruction}. Pricing-Strategie: ${priceInstruction}.
+                    GIB NUR JSON ZURÜCK: { "title": "SEO Titel", "description": "Text exakt nach Vorgabe", "suggested_price": 25, "price_rationale": "Begründung", ${deepJson}, "image_score": "8/10", "image_tips": "Tipps", "selling_tips": "Tipp", "hashtags": "#tags" }`;
 
                     const parsed = await callGemini(prompt, b64s, settings?.apiModel);
                     setResult(parsed);
                     
-                    actions.addListing({
-                        id: Date.now().toString(), title: parsed.title, description: parsed.description,
-                        price: parsePrice(parsed.suggested_price), buy_price: 0, status: 'active', shipping_status: 'pack',
-                        date: new Date().toISOString(), category: data.category, condition: data.condition, brand: data.brand
-                    });
-                    addToast("Gespeichert im Inventar!", "success");
+                    actions.addListing({ id: Date.now().toString(), title: parsed.title, description: parsed.description, price: parsePrice(parsed.suggested_price), buy_price: 0, status: 'active', shipping_status: 'pack', date: new Date().toISOString(), category: data.category, condition: data.condition, brand: data.brand });
+                    addToast("Im Inventar gespeichert!", "success");
                     setStep(4);
-                } catch (e) {
-                    addToast(e.message, "error");
-                    setStep(2);
-                } finally { setLoading(false); }
+                } catch (e) { addToast(e.message, "error"); setStep(2); } finally { setLoading(false); }
             };
 
-            const handleVintedExport = () => {
+            const directUpload = () => {
                 if(!result) return;
-                const hashtagString = Array.isArray(result.hashtags) ? result.hashtags.join(' ') : result.hashtags;
-                const clipboardText = `${result.title}\n\n${result.description}\n\n${hashtagString}\n\nPreis: ${parsePrice(result.suggested_price)} €`;
-                navigator.clipboard.writeText(clipboardText);
+                const text = `${result.title}\n\n${result.description}\n\n${Array.isArray(result.hashtags)?result.hashtags.join(' '):result.hashtags}\n\nPreis: ${parsePrice(result.suggested_price)}€`;
+                navigator.clipboard.writeText(text);
                 addToast("Titel & Text kopiert! Öffne Vinted...", "success");
-                setTimeout(() => {
-                    window.open('https://www.vinted.de/items/new', '_blank');
-                }, 800);
+                setTimeout(() => window.open('https://www.vinted.de/items/new', '_blank'), 800);
             };
 
             return (
                 <div className="p-6 lg:p-12 max-w-5xl mx-auto h-full overflow-y-auto animate-fade-in no-scrollbar pb-32">
-                    <div className="text-center mb-10 animate-slide-in-right">
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">AI Listing Studio</h1>
-                        <p className="text-gray-500 mt-2 font-medium text-lg">In 4 Schritten zum perfekten Vinted-Inserat.</p>
-                    </div>
-
-                    <div className="max-w-2xl mx-auto mb-12 animate-slide-up" style={{animationDelay: '100ms'}}>
-                        <div className="flex items-center justify-between relative">
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1.5 bg-gray-200 rounded-full z-0"></div>
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-vinted-500 rounded-full z-0 transition-all duration-700 ease-in-out" style={{width: `${((step-1)/3)*100}%`}}></div>
-                            {[1, 2, 3, 4].map(num => (
-                                <div key={num} className={`w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold text-base z-10 transition-all duration-500 bg-white ${step >= num ? 'border-vinted-500 text-vinted-600 shadow-md scale-110' : 'border-gray-200 text-gray-400'}`}>
-                                    {step > num ? <i className="fa-solid fa-check"></i> : num}
-                                </div>
-                            ))}
-                        </div>
+                    <div className="text-center mb-10"><h1 className="text-4xl font-extrabold">AI Listing Studio</h1><p className="text-gray-500 mt-2">In 4 Schritten zum perfekten Vinted-Inserat.</p></div>
+                    
+                    <div className="max-w-2xl mx-auto mb-12 relative flex items-center justify-between">
+                        <div className="absolute w-full h-1.5 bg-gray-200 z-0"></div><div className="absolute h-1.5 bg-vinted-500 transition-all z-0" style={{width: `${((step-1)/3)*100}%`}}></div>
+                        {[1, 2, 3, 4].map(n => <div key={n} className={`w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold z-10 bg-white ${step >= n ? 'border-vinted-500 text-vinted-600' : 'border-gray-200 text-gray-400'}`}>{step > n ? <i className="fa-solid fa-check"></i> : n}</div>)}
                     </div>
 
                     <div className="max-w-3xl mx-auto">
                         {step === 1 && (
-                            <Card className="p-8 md:p-14 text-center animate-slide-in-right">
-                                <div className="w-24 h-24 bg-white border border-gray-100 shadow-sm rounded-full flex items-center justify-center text-vinted-600 text-4xl mx-auto mb-6"><i className="fa-solid fa-camera"></i></div>
-                                <h2 className="text-3xl font-extrabold mb-3">Artikelfotos</h2>
-                                <p className="text-gray-500 font-medium mb-10">Lade alle Perspektiven deines Artikels hoch für die beste SEO-Analyse.</p>
-                                
-                                <div onDragOver={e=>e.preventDefault()} onDrop={handleDrop} className="border-2 border-dashed border-gray-300 rounded-3xl bg-white hover:bg-gray-50 hover:border-vinted-400 transition-all p-12 cursor-pointer relative group shadow-inner-light">
-                                    <input type="file" multiple accept="image/*" onChange={(e) => {
-                                        const newFiles = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
-                                        newFiles.forEach(f => f.preview = URL.createObjectURL(f));
-                                        setFiles(prev => [...prev, ...newFiles]);
-                                    }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                                    <i className="fa-solid fa-cloud-arrow-up text-5xl text-gray-300 group-hover:text-vinted-500 mb-4 transition-colors group-hover:-translate-y-2 duration-300"></i>
-                                    <h3 className="font-bold text-gray-900 text-lg">Dateien auswählen oder ablegen</h3>
+                            <Card className="p-8 md:p-14 text-center">
+                                <h2 className="text-3xl font-extrabold mb-8">Artikelfotos</h2>
+                                <div onDragOver={e=>e.preventDefault()} onDrop={handleDrop} className="border-2 border-dashed border-gray-300 rounded-3xl bg-gray-50 hover:bg-gray-100 p-12 cursor-pointer">
+                                    <input type="file" multiple accept="image/*" onChange={(e) => setFiles(p => [...p, ...Array.from(e.target.files)])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                    <i className="fa-solid fa-cloud-arrow-up text-5xl text-gray-400 mb-4"></i><h3 className="font-bold text-gray-900 text-lg">Bilder hier ablegen</h3>
                                 </div>
-
-                                {files.length > 0 && (
-                                    <div className="mt-8 grid grid-cols-4 md:grid-cols-5 gap-4">
-                                        {files.map((f, i) => (
-                                            <div key={i} className="aspect-square rounded-2xl overflow-hidden shadow-sm relative group border border-gray-200 hover:-translate-y-1 transition-transform">
-                                                <img src={f.preview} className="w-full h-full object-cover" />
-                                                <button onClick={()=>setFiles(files.filter((_, idx)=>idx!==i))} className="absolute top-1.5 right-1.5 bg-white/90 backdrop-blur-sm rounded-lg p-1.5 text-red-500 opacity-0 group-hover:opacity-100 shadow-sm transition-all hover:bg-red-500 hover:text-white"><i className="fa-solid fa-xmark text-xs"></i></button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                <div className="mt-10 flex justify-end"><Button onClick={()=>setStep(2)} disabled={files.length===0} size="lg" icon="fa-arrow-right">Weiter zu Setup</Button></div>
+                                {files.length > 0 && <div className="mt-8 grid grid-cols-4 gap-4">{files.map((f, i) => <div key={i} className="aspect-square rounded-2xl overflow-hidden relative border border-gray-200"><img src={URL.createObjectURL(f)} className="w-full h-full object-cover" /><button onClick={()=>setFiles(files.filter((_, idx)=>idx!==i))} className="absolute top-1 right-1 bg-white/90 p-1 text-red-500 rounded"><i className="fa-solid fa-xmark text-xs"></i></button></div>)}</div>}
+                                <div className="mt-10 flex justify-end"><Button onClick={()=>setStep(2)} disabled={files.length===0} size="lg">Weiter</Button></div>
                             </Card>
                         )}
-
                         {step === 2 && (
-                            <Card className="p-8 md:p-12 animate-slide-in-right">
-                                <h2 className="text-2xl font-extrabold mb-8 flex items-center gap-3 border-b border-gray-100 pb-4"><i className="fa-solid fa-sliders text-vinted-500"></i> Metadaten & KI-Setup</h2>
-                                
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 mb-8">
+                            <Card className="p-8 md:p-12">
+                                <h2 className="text-2xl font-extrabold mb-8">Metadaten & Setup</h2>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                                     <Select label="Kategorie" value={data.category} onChange={e=>setData({...data, category: e.target.value})} options={VINTED_DATA.categories} icon="fa-layer-group" />
                                     <Select label="Zustand" value={data.condition} onChange={e=>setData({...data, condition: e.target.value})} options={VINTED_DATA.conditions} icon="fa-star" />
                                     <Select label="Farbe" value={data.color} onChange={e=>setData({...data, color: e.target.value})} options={VINTED_DATA.colors} icon="fa-palette" />
                                     <Select label="Material" value={data.material} onChange={e=>setData({...data, material: e.target.value})} options={VINTED_DATA.materials} icon="fa-scissors" />
-                                    <Input className="sm:col-span-2" label="Marke" value={data.brand} onChange={e=>setData({...data, brand: e.target.value})} icon="fa-copyright" placeholder="Optional, aber extrem wichtig" />
+                                    <Input className="sm:col-span-2" label="Marke" value={data.brand} onChange={e=>setData({...data, brand: e.target.value})} icon="fa-copyright" placeholder="Extrem wichtig für den Preis!" />
                                 </div>
-
-                                <div className="mb-6">
-                                    <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1 mb-3 block">Beschreibungstext (Copywriting)</label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div onClick={()=>setData({...data, style: 'Detailliert'})} className={`cursor-pointer p-4 rounded-2xl border-2 transition-all ${data.style === 'Detailliert' ? 'border-vinted-500 bg-white shadow-sm ring-4 ring-vinted-500/10' : 'border-gray-200 bg-gray-50/50 hover:border-gray-300'}`}>
-                                            <div className="flex justify-between items-center mb-1">
-                                                <h4 className="font-bold text-gray-900">Ausführlich</h4>
-                                                {data.style === 'Detailliert' && <i className="fa-solid fa-circle-check text-vinted-500"></i>}
-                                            </div>
-                                            <p className="text-xs text-gray-500 font-medium">Moin!, Details, Fließtext & Signatur.</p>
-                                        </div>
-                                        <div onClick={()=>setData({...data, style: 'Kurz'})} className={`cursor-pointer p-4 rounded-2xl border-2 transition-all ${data.style === 'Kurz' ? 'border-vinted-500 bg-white shadow-sm ring-4 ring-vinted-500/10' : 'border-gray-200 bg-gray-50/50 hover:border-gray-300'}`}>
-                                            <div className="flex justify-between items-center mb-1">
-                                                <h4 className="font-bold text-gray-900">Kurz & Knapp</h4>
-                                                {data.style === 'Kurz' && <i className="fa-solid fa-circle-check text-vinted-500"></i>}
-                                            </div>
-                                            <p className="text-xs text-gray-500 font-medium">Stichpunkte, harte Fakten, schnell lesbar.</p>
-                                        </div>
-                                    </div>
+                                <div className="grid grid-cols-2 gap-4 mb-6">
+                                    <div onClick={()=>setData({...data, style: 'Detailliert'})} className={`p-4 rounded-2xl border-2 cursor-pointer ${data.style==='Detailliert'?'border-vinted-500':'border-gray-200'}`}><p className="font-bold">Ausführlicher Text</p></div>
+                                    <div onClick={()=>setData({...data, style: 'Kurz'})} className={`p-4 rounded-2xl border-2 cursor-pointer ${data.style==='Kurz'?'border-vinted-500':'border-gray-200'}`}><p className="font-bold">Kurz & Knapp</p></div>
                                 </div>
-
-                                <div className="mb-8">
-                                    <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1 mb-3 block">Pricing-Strategie</label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div onClick={()=>setData({...data, pricingStrategy: 'Pessimistisch'})} className={`cursor-pointer p-4 rounded-2xl border-2 transition-all ${data.pricingStrategy === 'Pessimistisch' ? 'border-blue-500 bg-white shadow-sm ring-4 ring-blue-500/10' : 'border-gray-200 bg-gray-50/50 hover:border-gray-300'}`}>
-                                            <div className="flex justify-between items-center mb-1">
-                                                <h4 className="font-bold text-gray-900">Pessimistisch</h4>
-                                                {data.pricingStrategy === 'Pessimistisch' && <i className="fa-solid fa-circle-check text-blue-500"></i>}
-                                            </div>
-                                            <p className="text-xs text-gray-500 font-medium">Untergrenze, für extrem schnellen "Quick Flip".</p>
-                                        </div>
-                                        <div onClick={()=>setData({...data, pricingStrategy: 'Optimistisch'})} className={`cursor-pointer p-4 rounded-2xl border-2 transition-all ${data.pricingStrategy === 'Optimistisch' ? 'border-blue-500 bg-white shadow-sm ring-4 ring-blue-500/10' : 'border-gray-200 bg-gray-50/50 hover:border-gray-300'}`}>
-                                            <div className="flex justify-between items-center mb-1">
-                                                <h4 className="font-bold text-gray-900">Optimistisch</h4>
-                                                {data.pricingStrategy === 'Optimistisch' && <i className="fa-solid fa-circle-check text-blue-500"></i>}
-                                            </div>
-                                            <p className="text-xs text-gray-500 font-medium">Obergrenze für maximalen Profit & Verhandlung.</p>
-                                        </div>
-                                    </div>
+                                <div className="grid grid-cols-2 gap-4 mb-8">
+                                    <div onClick={()=>setData({...data, pricingStrategy: 'Pessimistisch'})} className={`p-4 rounded-2xl border-2 cursor-pointer ${data.pricingStrategy==='Pessimistisch'?'border-blue-500':'border-gray-200'}`}><p className="font-bold">Pessimistischer Preis</p><p className="text-xs text-gray-500 mt-1">Für schnellen Verkauf</p></div>
+                                    <div onClick={()=>setData({...data, pricingStrategy: 'Optimistisch'})} className={`p-4 rounded-2xl border-2 cursor-pointer ${data.pricingStrategy==='Optimistisch'?'border-blue-500':'border-gray-200'}`}><p className="font-bold">Optimistischer Preis</p><p className="text-xs text-gray-500 mt-1">Für max. Profit</p></div>
                                 </div>
-
-                                <div className="mb-10 p-5 bg-gray-900 rounded-2xl flex justify-between items-center cursor-pointer shadow-floating hover:-translate-y-1 transition-transform border border-gray-800" onClick={()=>setData({...data, deepAnalysis: !data.deepAnalysis})}>
-                                    <div>
-                                        <h4 className="font-bold text-white flex items-center gap-2"><i className="fa-solid fa-chart-pie text-vinted-400"></i> Deep Market Research <Badge color="vinted" className="ml-2 !py-0.5 !text-[10px]">PRO</Badge></h4>
-                                        <p className="text-xs text-gray-400 mt-1.5 font-medium">KI berechnet Marktspanne, Verkaufsdauer & Werttreiber.</p>
-                                    </div>
-                                    <div className={`w-12 h-6 rounded-full relative transition-colors ${data.deepAnalysis ? 'bg-vinted-500' : 'bg-gray-700'}`}>
-                                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${data.deepAnalysis ? 'left-7' : 'left-1'}`}></div>
-                                    </div>
+                                <div className="mb-10 p-5 bg-gray-900 rounded-2xl flex justify-between items-center cursor-pointer" onClick={()=>setData({...data, deepAnalysis: !data.deepAnalysis})}>
+                                    <div><h4 className="font-bold text-white"><i className="fa-solid fa-chart-pie text-vinted-400 mr-2"></i> Deep Market Research</h4><p className="text-xs text-gray-400">Berechnet Marktspanne & Werttreiber.</p></div>
+                                    <div className={`w-12 h-6 rounded-full relative ${data.deepAnalysis ? 'bg-vinted-500' : 'bg-gray-700'}`}><div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${data.deepAnalysis ? 'left-7' : 'left-1'}`}></div></div>
                                 </div>
-
-                                <div className="flex justify-between border-t border-gray-100 pt-8">
-                                    <Button variant="secondary" onClick={()=>setStep(1)} size="lg" icon="fa-arrow-left">Zurück</Button>
-                                    <Button onClick={runAnalysis} variant="primary" icon="fa-wand-magic-sparkles" size="lg">KI Analyse starten</Button>
-                                </div>
+                                <div className="flex justify-between pt-8 border-t border-gray-100"><Button variant="secondary" onClick={()=>setStep(1)} size="lg">Zurück</Button><Button onClick={runAnalysis} variant="primary" icon="fa-wand-magic-sparkles" size="lg">Analyse starten</Button></div>
                             </Card>
                         )}
 
                         {step === 3 && (
-                            <div className="py-32 text-center animate-fade-in flex flex-col items-center">
-                                <div className="relative w-32 h-32 mb-8">
-                                    <div className="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
-                                    <div className="absolute inset-0 border-4 border-vinted-500 rounded-full border-t-transparent animate-spin" style={{animationDuration: '2s'}}></div>
-                                    <div className="absolute inset-2 border-4 border-vinted-300 rounded-full border-b-transparent animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
-                                    <div className="absolute inset-0 flex items-center justify-center text-vinted-600 text-4xl"><i className="fa-solid fa-microchip animate-pulse-fast"></i></div>
-                                </div>
-                                <h2 className="text-3xl font-extrabold text-gray-900 mb-3">KI generiert Listing</h2>
-                                <div className="h-6 overflow-hidden">
-                                    <p className="text-gray-500 font-medium text-lg animate-[slideUp_2s_infinite]">Scanne Bildpunkte und aggregiere Marktdaten...</p>
-                                </div>
+                            <div className="py-32 text-center">
+                                <i className="fa-solid fa-circle-notch fa-spin text-6xl text-vinted-600 mb-6"></i>
+                                <h2 className="text-3xl font-extrabold mb-3">KI berechnet Listing</h2>
                             </div>
                         )}
 
                         {step === 4 && result && (
-                            <div className="space-y-6 animate-slide-in-right">
-                                
-                                {/* DIRECT VINTED EXPORT BUTTON */}
-                                <Card className="p-8 bg-gradient-to-r from-vinted-600 to-vinted-800 text-white shadow-floating border-none mb-8">
-                                    <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                                        <div>
-                                            <h2 className="text-2xl font-bold mb-1 flex items-center gap-2"><i className="fa-solid fa-rocket"></i> Listing fertig!</h2>
-                                            <p className="text-vinted-100 text-sm">Der Text und Titel werden kopiert und Vinted in einem neuen Tab geöffnet.</p>
-                                        </div>
-                                        <Button onClick={handleVintedExport} className="w-full md:w-auto !bg-white !text-vinted-700 shadow-lg hover:shadow-xl !px-8" size="lg" icon="fa-arrow-up-right-from-square">Direkt bei Vinted einstellen</Button>
-                                    </div>
+                            <div className="space-y-6">
+                                <Card className="p-6 bg-vinted-600 text-white flex justify-between items-center">
+                                    <div><h2 className="text-xl font-bold"><i className="fa-solid fa-rocket"></i> Listing fertig!</h2></div>
+                                    <Button onClick={directUpload} className="!bg-white !text-vinted-700" icon="fa-arrow-up-right-from-square">Direkt bei Vinted einstellen</Button>
                                 </Card>
 
                                 <Card noPadding>
-                                    <div className="px-8 py-5 bg-white border-b border-gray-100 flex justify-between items-center">
-                                        <div className="font-bold text-[11px] uppercase tracking-widest text-gray-500"><i className="fa-solid fa-heading text-vinted-500 mr-2"></i> SEO Titel</div>
-                                        <Button variant="ghost" size="sm" onClick={()=>{navigator.clipboard.writeText(result.title); addToast('Kopiert');}} icon="fa-copy">Kopieren</Button>
-                                    </div>
-                                    <div className="p-8 bg-gray-50/50"><p className="text-2xl font-black text-gray-900 leading-tight">{result.title}</p></div>
+                                    <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center"><span className="text-xs font-bold text-gray-500 uppercase">Titel</span><Button variant="ghost" size="sm" onClick={()=>navigator.clipboard.writeText(result.title)}>Kopieren</Button></div>
+                                    <div className="p-6 text-xl font-black">{result.title}</div>
                                 </Card>
 
                                 <Card noPadding>
-                                    <div className="px-8 py-5 bg-white border-b border-gray-100 flex justify-between items-center">
-                                        <div className="font-bold text-[11px] uppercase tracking-widest text-gray-500"><i className="fa-solid fa-align-left text-vinted-500 mr-2"></i> Text</div>
-                                        <Button variant="ghost" size="sm" onClick={()=>{navigator.clipboard.writeText(result.description); addToast('Kopiert');}} icon="fa-copy">Kopieren</Button>
-                                    </div>
-                                    <div className="p-8 bg-gray-50/50">
-                                        <p className="whitespace-pre-wrap text-base text-gray-800 font-medium leading-relaxed">{result.description}</p>
-                                        <div className="mt-8 pt-6 border-t border-gray-200 flex flex-wrap gap-2">
-                                            {Array.isArray(result.hashtags) ? result.hashtags.map(t => <span key={t} className="bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">{t}</span>) : (result.hashtags || '').split(' ').map(t => t && <span key={t} className="bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">{t}</span>)}
-                                        </div>
-                                    </div>
+                                    <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center"><span className="text-xs font-bold text-gray-500 uppercase">Text</span><Button variant="ghost" size="sm" onClick={()=>navigator.clipboard.writeText(result.description)}>Kopieren</Button></div>
+                                    <div className="p-6"><p className="whitespace-pre-wrap font-medium">{result.description}</p><p className="mt-4 font-bold text-vinted-600">{Array.isArray(result.hashtags)?result.hashtags.join(' '):result.hashtags}</p></div>
                                 </Card>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {result.detailed_price_breakdown ? (
-                                        <Card className="p-8 bg-gray-900 text-white relative overflow-hidden md:col-span-2 shadow-floating">
-                                            <i className="fa-solid fa-chart-pie absolute -right-10 -bottom-10 text-9xl text-white/5 transform -rotate-12"></i>
-                                            <div className="relative z-10">
-                                                <div className="flex justify-between items-start mb-6">
-                                                    <p className="text-[11px] font-bold text-vinted-400 uppercase tracking-widest flex items-center gap-2"><i className="fa-solid fa-bolt"></i> Market Deep Dive</p>
-                                                </div>
-                                                <div className="grid grid-cols-3 gap-4 mb-8 items-end">
-                                                    <div>
-                                                        <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Low</p>
-                                                        <p className="text-2xl font-bold text-gray-300">{parsePrice(result.detailed_price_breakdown.lowest).toFixed(2)} €</p>
-                                                    </div>
-                                                    <div className="border-x border-gray-700 px-4 text-center">
-                                                        <p className="text-[10px] text-vinted-400 font-bold uppercase mb-1">Empfohlen ({data.pricingStrategy})</p>
-                                                        <p className="text-5xl font-black text-vinted-400">{parsePrice(result.suggested_price).toFixed(2)} €</p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">High</p>
-                                                        <p className="text-2xl font-bold text-gray-300">{parsePrice(result.detailed_price_breakdown.highest).toFixed(2)} €</p>
-                                                    </div>
-                                                </div>
-                                                <div className="bg-gray-800/80 p-5 rounded-2xl mb-6 border border-gray-700 shadow-inner-light">
-                                                    <p className="text-sm font-medium text-gray-300 leading-relaxed mb-3"><strong className="text-white">Analyse:</strong> {result.detailed_price_breakdown.deep_analysis}</p>
-                                                    <div className="flex gap-4 border-t border-gray-700 pt-3 mt-3">
-                                                        <p className="text-xs text-gray-400"><strong className="text-gray-300">Zielgruppe:</strong> {result.target_audience || 'Allgemein'}</p>
-                                                        <p className="text-xs text-gray-400"><strong className="text-gray-300">Konkurrenz:</strong> {result.competition || 'Mittel'}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-wrap gap-2">
-                                                    <Badge color="vinted" className="bg-vinted-500/20 text-vinted-300 border-vinted-500/30">⏳ Dauer: {result.detailed_price_breakdown.avg_time}</Badge>
-                                                    {Array.isArray(result.detailed_price_breakdown.factors) && result.detailed_price_breakdown.factors.map(f => <Badge key={f} color="gray" className="bg-gray-800 text-gray-300 border-gray-700">{f}</Badge>)}
-                                                </div>
+                                        <Card className="p-8 bg-gray-900 text-white md:col-span-2">
+                                            <p className="text-xs font-bold text-vinted-400 uppercase mb-4">Mega-Preisanalyse</p>
+                                            <div className="grid grid-cols-3 gap-4 mb-6">
+                                                <div><p className="text-xs text-gray-500 uppercase mb-1">Low</p><p className="text-2xl font-bold">{parsePrice(result.detailed_price_breakdown.lowest).toFixed(2)}€</p></div>
+                                                <div className="text-center"><p className="text-xs text-vinted-400 uppercase mb-1">Empfohlen</p><p className="text-5xl font-black text-vinted-400">{parsePrice(result.suggested_price).toFixed(2)}€</p></div>
+                                                <div className="text-right"><p className="text-xs text-gray-500 uppercase mb-1">High</p><p className="text-2xl font-bold">{parsePrice(result.detailed_price_breakdown.highest).toFixed(2)}€</p></div>
                                             </div>
+                                            <p className="bg-gray-800 p-4 rounded-xl text-sm leading-relaxed">{result.detailed_price_breakdown.deep_analysis}</p>
                                         </Card>
                                     ) : (
-                                        <Card className="p-8 bg-gray-900 text-white relative overflow-hidden">
-                                            <i className="fa-solid fa-tag absolute -right-4 -bottom-4 text-8xl text-gray-800 transform -rotate-12"></i>
-                                            <div className="relative z-10">
-                                                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Marktwert ({data.pricingStrategy})</p>
-                                                <h3 className="text-5xl font-black mb-6 text-vinted-400">{parsePrice(result.suggested_price).toFixed(2)} €</h3>
-                                                <p className="text-sm text-gray-300 font-medium leading-relaxed">{result.price_rationale}</p>
-                                            </div>
-                                        </Card>
+                                        <Card className="p-8 bg-gray-900 text-white"><p className="text-xs text-gray-400 uppercase mb-2">Marktwert</p><h3 className="text-5xl font-black text-vinted-400 mb-4">{parsePrice(result.suggested_price).toFixed(2)}€</h3><p className="text-sm">{result.price_rationale}</p></Card>
                                     )}
-                                    
-                                    <div className={`space-y-6 ${result.detailed_price_breakdown ? 'md:col-span-2' : ''}`}>
-                                        <Card className="p-8 h-full flex flex-col justify-between">
-                                            <div className={result.detailed_price_breakdown ? 'grid grid-cols-1 md:grid-cols-2 gap-8' : ''}>
-                                                <div>
-                                                    <div className="flex justify-between items-start mb-6">
-                                                        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest"><i className="fa-solid fa-camera text-vinted-500 mr-2"></i> Foto-Score</p>
-                                                        <Badge color={parseInt(result.image_score) > 7 ? 'green' : 'amber'} className="shadow-sm text-sm py-1.5 px-3">{result.image_score}</Badge>
-                                                    </div>
-                                                    <p className="text-sm text-gray-700 font-medium leading-relaxed bg-gray-50 p-5 rounded-xl border border-gray-100">{result.image_tips}</p>
-                                                </div>
-                                                <div>
-                                                    <p className={result.detailed_price_breakdown ? "text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-6" : "text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-6 mb-4"}><i className="fa-solid fa-lightbulb text-amber-500 mr-2"></i> Sales Tipp ({data.category})</p>
-                                                    <p className="text-sm text-amber-900 font-medium leading-relaxed bg-amber-50 p-5 rounded-xl border border-amber-100">{result.selling_tips}</p>
-                                                </div>
-                                            </div>
-                                        </Card>
-                                    </div>
+                                    <Card className="p-6"><p className="text-xs text-gray-500 uppercase mb-2">Foto-Score</p><Badge color="amber">{result.image_score}</Badge><p className="text-sm mt-4">{result.image_tips}</p></Card>
                                 </div>
-                                <div className="pt-8 text-center">
-                                    <Button variant="secondary" onClick={()=>{setStep(1); setFiles([]); setResult(null);}} icon="fa-rotate-right" size="lg" className="mx-auto shadow-md hover:-translate-y-1">Neues Listing generieren</Button>
-                                </div>
+                                <div className="pt-6 text-center"><Button variant="secondary" onClick={()=>{setStep(1); setFiles([]); setResult(null);}} size="lg" className="mx-auto">Neues Listing</Button></div>
                             </div>
                         )}
                     </div>
@@ -812,132 +373,67 @@
             );
         };
 
-        // --- INVENTORY (Meine Artikel) - BULLETPROOF ---
+        // --- INVENTORY (MIT MANUELLER EINGABE) ---
         const Inventory = ({ setView }) => {
             const { listings, actions, addToast } = useAppContext();
             const [search, setSearch] = useState('');
             const [filter, setFilter] = useState('all');
-            const [showManualModal, setShowManualModal] = useState(false);
-            
-            const [manualData, setManualData] = useState({ title: '', price: '', category: VINTED_DATA.categories[8], condition: VINTED_DATA.conditions[2] });
+            const [showManual, setShowManual] = useState(false);
+            const [m, setM] = useState({ title: '', price: '', category: VINTED_DATA.categories[8], condition: VINTED_DATA.conditions[2] });
 
             const filtered = listings.filter(l => {
                 if (!l) return false; 
-                const titleStr = typeof l.title === 'string' ? l.title.toLowerCase() : '';
-                const searchStr = typeof search === 'string' ? search.toLowerCase() : '';
-                const matchS = titleStr.includes(searchStr);
+                const matchS = (l.title||'').toLowerCase().includes(search.toLowerCase());
                 const matchF = filter === 'all' || l.status === filter;
                 return matchS && matchF;
             });
 
             const handleManualAdd = () => {
-                actions.addListing({
-                    id: Date.now().toString(), title: manualData.title || 'Neuer Artikel',
-                    price: parsePrice(manualData.price), category: manualData.category, condition: manualData.condition,
-                    status: 'active', shipping_status: 'pack', date: new Date().toISOString(), buy_price: 0, score: '-', brand: '-'
-                });
-                setShowManualModal(false);
-                setManualData({title: '', price: '', category: VINTED_DATA.categories[8], condition: VINTED_DATA.conditions[2]});
-                addToast("Artikel manuell hinzugefügt", "success");
+                if(!m.title) return addToast("Titel fehlt!", "warning");
+                actions.addListing({ id: Date.now().toString(), title: m.title, price: parsePrice(m.price), category: m.category, condition: m.condition, status: 'active', shipping_status: 'pack', date: new Date().toISOString(), buy_price: 0 });
+                setShowManual(false); setM({title: '', price: '', category: VINTED_DATA.categories[8], condition: VINTED_DATA.conditions[2]}); addToast("Hinzugefügt!", "success");
             };
 
             return (
-                <div className="p-6 lg:p-12 max-w-7xl mx-auto h-full overflow-y-auto animate-fade-in no-scrollbar pb-32 relative">
-                    <div className="mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4 animate-slide-in-right">
-                        <div>
-                            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Inventar</h1>
-                            <p className="text-gray-500 mt-2 font-medium text-lg">Verwalte {listings.length} Artikel zentral an einem Ort.</p>
-                        </div>
-                    </div>
-
-                    <Card className="flex flex-col h-[calc(100vh-250px)] min-h-[500px] p-0 animate-slide-up" style={{animationDelay: '100ms'}}>
+                <div className="p-6 lg:p-12 max-w-7xl mx-auto h-full overflow-y-auto pb-32 relative">
+                    <div className="mb-10 flex justify-between items-end"><h1 className="text-4xl font-extrabold text-gray-900">Inventar</h1></div>
+                    
+                    <Card className="flex flex-col h-[600px] p-0">
                         <div className="p-6 border-b border-gray-100 bg-white flex flex-col sm:flex-row gap-4">
-                            <div className="flex-1 relative">
-                                <i className="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                                <input type="text" placeholder="Artikel suchen..." value={search} onChange={e=>setSearch(e.target.value)} className="w-full pl-12 pr-4 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm font-semibold focus:bg-white focus:border-vinted-500 outline-none shadow-inner-light transition-all" />
-                            </div>
-                            <div className="flex gap-3 shrink-0">
-                                <div className="w-full sm:w-48 relative">
-                                    <select value={filter} onChange={e=>setFilter(e.target.value)} className="w-full px-5 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 focus:bg-white focus:border-vinted-500 outline-none appearance-none cursor-pointer shadow-inner-light transition-all">
-                                        <option value="all">Alle Status</option><option value="active">Nur Aktive</option><option value="sold">Nur Verkaufte</option><option value="paused">Pausierte</option>
-                                    </select>
-                                    <i className="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none"></i>
-                                </div>
-                                <Button variant="primary" onClick={()=>setShowManualModal(true)} icon="fa-plus" title="Manuell ohne KI hinzufügen"></Button>
-                            </div>
+                            <Input value={search} onChange={e=>setSearch(e.target.value)} icon="fa-magnifying-glass" placeholder="Suchen..." className="flex-1" />
+                            <div className="flex gap-3 shrink-0"><Select value={filter} onChange={e=>setFilter(e.target.value)} options={["all", "active", "sold", "paused"]} className="w-48" /><Button variant="primary" onClick={()=>setShowManual(true)} icon="fa-plus"></Button></div>
                         </div>
-
-                        <div className="flex-1 overflow-y-auto p-0 no-scrollbar relative bg-gray-50/30">
-                            {filtered.length > 0 ? (
-                                <table className="w-full text-left border-collapse">
-                                    <thead className="bg-white sticky top-0 z-10 shadow-xs border-b border-gray-100">
-                                        <tr>
-                                            <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Artikel</th>
-                                            <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest w-32">Preis</th>
-                                            <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest w-48">Status</th>
-                                            <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest w-24 text-right">Aktion</th>
+                        <div className="flex-1 overflow-y-auto p-0 bg-gray-50/30">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-white sticky top-0 shadow-xs border-b"><tr><th className="px-8 py-5 text-[10px] text-gray-400 uppercase">Artikel</th><th className="px-8 py-5 text-[10px] text-gray-400 uppercase w-32">Preis</th><th className="px-8 py-5 text-[10px] text-gray-400 uppercase w-40">Status</th><th className="px-8 py-5 text-[10px] text-gray-400 uppercase w-24 text-right">Aktion</th></tr></thead>
+                                <tbody>
+                                    {filtered.map(item => (
+                                        <tr key={item.id} className="border-b border-gray-100 hover:bg-white transition-colors">
+                                            <td className="px-8 py-5"><div className="flex items-center gap-4"><div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400"><i className="fa-regular fa-image"></i></div><div><p className="font-bold text-gray-900">{item.title}</p><p className="text-[10px] text-gray-500 mt-1">{item.category}</p></div></div></td>
+                                            <td className="px-8 py-5 font-black text-gray-900">{parsePrice(item.price).toFixed(2)} €</td>
+                                            <td className="px-8 py-5">
+                                                <select value={item.status} onChange={e => actions.updateListing(item.id, {status: e.target.value})} className="bg-transparent font-bold text-xs outline-none cursor-pointer"><option value="active">Aktiv</option><option value="paused">Pausiert</option><option value="sold">Verkauft</option></select>
+                                            </td>
+                                            <td className="px-8 py-5 text-right"><button onClick={()=>{if(confirm('Löschen?')) actions.deleteListing(item.id);}} className="text-gray-400 hover:text-red-500 p-2"><i className="fa-solid fa-trash"></i></button></td>
                                         </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100">
-                                        {filtered.map((item, i) => {
-                                            if(!item) return null;
-                                            return (
-                                            <tr key={item.id || i} className="hover:bg-white transition-colors group animate-slide-in-right" style={{animationDelay: `${i*50}ms`}}>
-                                                <td className="px-8 py-5">
-                                                    <div className="flex items-center gap-5">
-                                                        <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center border border-gray-200 shrink-0 text-gray-300 shadow-sm group-hover:scale-105 transition-transform"><i className="fa-regular fa-image text-xl"></i></div>
-                                                        <div className="min-w-0">
-                                                            <p className="text-base font-bold text-gray-900 truncate mb-1">{item.title}</p>
-                                                            <div className="flex gap-2">
-                                                                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200">{item.category || 'N/A'}</span>
-                                                                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200">{item.condition || 'N/A'}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-5 whitespace-nowrap"><span className="text-base font-black text-gray-900">{parsePrice(item.price).toFixed(2)} €</span></td>
-                                                <td className="px-8 py-5 whitespace-nowrap">
-                                                    <div className="relative w-40">
-                                                        <select value={item.status} onChange={e => {actions.updateListing(item.id, {status: e.target.value}); addToast("Status aktualisiert");}} className={`appearance-none w-full py-2.5 pl-4 pr-8 rounded-xl text-xs font-bold outline-none cursor-pointer border transition-colors shadow-sm ${item.status === 'sold' ? 'bg-green-50 border-green-200 text-green-700 focus:border-green-500' : item.status === 'paused' ? 'bg-gray-100 border-gray-300 text-gray-700' : 'bg-white border-gray-300 text-gray-700 focus:border-vinted-500'}`}>
-                                                            <option value="active">Aktiv</option><option value="paused">Pausiert</option><option value="sold">Verkauft</option>
-                                                        </select>
-                                                        <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[10px] pointer-events-none opacity-50"></i>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-5 whitespace-nowrap text-right">
-                                                    <button onClick={()=>{if(confirm('Wirklich löschen?')) actions.deleteListing(item.id);}} className="w-10 h-10 rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-500 border border-transparent hover:border-red-100 transition-colors inline-flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 shadow-sm">
-                                                        <i className="fa-solid fa-trash text-sm"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        )})}
-                                    </tbody>
-                                </table>
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center p-8">
-                                    <EmptyState icon="fa-box-open" title="Keine Artikel gefunden" description="Passe deine Suche an oder füge neue Inserate über das Analyse-Studio hinzu." action={<Button onClick={()=>setView('analyze')} icon="fa-plus">Neues Inserat</Button>} />
-                                </div>
-                            )}
-                        </div>
-                        <div className="p-5 border-t border-gray-100 bg-white text-[11px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center">
-                            <span>Zeige {filtered.length} Einträge</span>
+                                    ))}
+                                    {filtered.length === 0 && <tr><td colSpan="4"><EmptyState icon="fa-box-open" title="Keine Artikel" description="Füge Artikel manuell oder per KI hinzu." action={<Button onClick={()=>setView('analyze')}>Zur KI Analyse</Button>} /></td></tr>}
+                                </tbody>
+                            </table>
                         </div>
                     </Card>
 
-                    {showManualModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fade-in">
-                            <Card className="w-full max-w-lg shadow-floating p-8 relative border-none">
-                                <button onClick={()=>setShowManualModal(false)} className="absolute top-6 right-6 w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center transition-colors"><i className="fa-solid fa-xmark"></i></button>
-                                <h2 className="text-2xl font-extrabold text-gray-900 mb-6">Manuell Hinzufügen</h2>
+                    {showManual && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+                            <Card className="w-full max-w-lg relative border-none">
+                                <button onClick={()=>setShowManual(false)} className="absolute top-6 right-6 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"><i className="fa-solid fa-xmark"></i></button>
+                                <h2 className="text-2xl font-extrabold mb-6">Manuell Hinzufügen</h2>
                                 <div className="space-y-4 mb-8">
-                                    <Input label="Titel" value={manualData.title} onChange={e=>setManualData({...manualData, title: e.target.value})} placeholder="z.B. Carhartt Hose Schwarz" />
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <Input label="Preis (€)" type="number" value={manualData.price} onChange={e=>setManualData({...manualData, price: e.target.value})} placeholder="25" />
-                                        <Select label="Zustand" value={manualData.condition} onChange={e=>setManualData({...manualData, condition: e.target.value})} options={VINTED_DATA.conditions} />
-                                    </div>
-                                    <Select label="Kategorie" value={manualData.category} onChange={e=>setManualData({...manualData, category: e.target.value})} options={VINTED_DATA.categories} />
+                                    <Input label="Titel" value={m.title} onChange={e=>setM({...m, title: e.target.value})} placeholder="z.B. Hose" />
+                                    <div className="grid grid-cols-2 gap-4"><Input label="Preis (€)" type="number" value={m.price} onChange={e=>setM({...m, price: e.target.value})} placeholder="25" /><Select label="Zustand" value={m.condition} onChange={e=>setM({...m, condition: e.target.value})} options={VINTED_DATA.conditions} /></div>
+                                    <Select label="Kategorie" value={m.category} onChange={e=>setM({...m, category: e.target.value})} options={VINTED_DATA.categories} />
                                 </div>
-                                <Button onClick={handleManualAdd} className="w-full shadow-lg" size="lg" icon="fa-check">Speichern (Ohne KI)</Button>
+                                <Button onClick={handleManualAdd} className="w-full" size="lg" icon="fa-check">Speichern</Button>
                             </Card>
                         </div>
                     )}
@@ -945,89 +441,145 @@
             );
         };
 
-        // --- SMART REPLY (MULTI LANG) ---
+        // --- DEAL CHECKER PRO ---
+        const DealChecker = () => {
+            const { addToast, settings } = useAppContext();
+            const [links, setLinks] = useState("");
+            const [files, setFiles] = useState([]);
+            const [purchasePrice, setPurchasePrice] = useState("");
+            const [isFree, setIsFree] = useState(false);
+            const [margin, setMargin] = useState(40);
+            const [loading, setLoading] = useState(false);
+            const [result, setResult] = useState(null);
+
+            const handleDrop = (e) => { e.preventDefault(); const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')); if(dropped.length) setFiles(p => [...p, ...dropped]); };
+
+            const handleCheck = async () => {
+                if(!links.trim() && files.length === 0) return addToast("Bitte Text oder Bilder einfügen.", "warning");
+                setLoading(true); setResult(null);
+                try {
+                    const b64s = []; for(let f of files) b64s.push(await fileToBase64(f));
+                    const priceInfo = isFree ? `Zu verschenken (0 €)` : (purchasePrice ? `${purchasePrice} €` : `Nicht angegeben`);
+                    const prompt = `Analysiere diesen Deal: ${links || 'Bilder'}. Preis: ${priceInfo}. Ziel-Netto-Marge: ${margin}%. Berücksichtige Fahrt/Verpackung (3€).
+                    GIB AUSSCHLIESSLICH DIESES JSON ZURÜCK: { "item_name": "Genaue Bezeichnung", "demand_level": "Hoch/Mittel/Niedrig", "estimated_sell_price": 50, "calculated_profit": 15.50, "max_buy_price": 25.00, "roi_percent": 30, "risk_assessment": "Hoch/Mittel/Niedrig", "worth_it": true, "deep_analysis": "Begründung", "action_steps": ["Schritt"], "red_flags": ["Worauf achten?"], "negotiation_msg": "Text für Verkäufer" }`;
+                    const res = await callGemini(prompt, b64s, settings?.apiModel);
+                    setResult(res);
+                } catch(e) { addToast(e.message, "error"); } finally { setLoading(false); }
+            };
+
+            return (
+                <div className="p-6 lg:p-12 max-w-[1600px] mx-auto h-full overflow-y-auto pb-32">
+                    <h1 className="text-4xl font-extrabold mb-10">Deal Checker Pro</h1>
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        <div className="space-y-6">
+                            <Card className="p-8">
+                                <h2 className="text-lg font-bold mb-4">1. Deal Details</h2>
+                                <Input multiline rows={3} placeholder="Link oder Text..." value={links} onChange={e=>setLinks(e.target.value)} icon="fa-link" />
+                                <div className="mt-6 border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50 p-6 text-center cursor-pointer relative" onDragOver={e=>e.preventDefault()} onDrop={handleDrop}>
+                                    <input type="file" multiple accept="image/*" onChange={(e) => setFiles(p => [...p, ...Array.from(e.target.files)])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                    <i className="fa-solid fa-camera-retro text-2xl text-gray-400 mb-2"></i><p className="text-xs font-bold text-gray-600">Screenshots hier ablegen</p>
+                                </div>
+                                {files.length > 0 && <div className="mt-4 flex gap-3 overflow-x-auto">{files.map((f, i) => <div key={i} className="w-12 h-12 rounded-lg overflow-hidden relative border border-gray-200"><img src={URL.createObjectURL(f)} className="w-full h-full object-cover" /><button onClick={()=>setFiles(files.filter((_, idx)=>idx!==i))} className="absolute top-0 right-0 bg-white/90 p-1 text-red-500"><i className="fa-solid fa-xmark text-[10px]"></i></button></div>)}</div>}
+                            </Card>
+                            <Card className="p-8">
+                                <h2 className="text-lg font-bold mb-4">2. Kalkulation</h2>
+                                <div className="flex items-center gap-3 mb-6 p-4 bg-vinted-50 rounded-xl cursor-pointer" onClick={()=>setIsFree(!isFree)}><div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${isFree ? 'bg-vinted-600 border-vinted-600 text-white' : 'bg-white'}`}>{isFree && <i className="fa-solid fa-check text-[10px]"></i>}</div><span className="font-bold text-vinted-900">Zu verschenken (0 €)</span></div>
+                                <div className="grid grid-cols-2 gap-6 mb-8"><Input label="Preis (€)" type="number" value={purchasePrice} onChange={e=>setPurchasePrice(e.target.value)} disabled={isFree} /><div><label className="text-[11px] font-bold text-gray-500 uppercase block mb-2">Marge</label><div className="bg-gray-50 rounded-xl p-3 flex justify-between"><input type="range" min="10" max="100" step="5" value={margin} onChange={e=>setMargin(Number(e.target.value))} className="w-2/3" /><span className="font-bold text-vinted-600">{margin}%</span></div></div></div>
+                                <Button onClick={handleCheck} loading={loading} className="w-full" size="lg">Analysieren</Button>
+                            </Card>
+                        </div>
+                        <div className="min-h-[500px]">
+                            {loading && <Card className="h-full flex items-center justify-center"><i className="fa-solid fa-circle-notch fa-spin text-5xl text-vinted-600"></i></Card>}
+                            {result && !loading && (
+                                <Card className={`h-full flex flex-col border-t-8 ${result.worth_it ? 'border-t-green-500' : 'border-t-red-500'}`}>
+                                    <div className="p-4 flex-1 overflow-y-auto no-scrollbar">
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div><h2 className={`text-4xl font-black ${result.worth_it ? 'text-green-600' : 'text-red-600'}`}>{result.worth_it ? 'Zuschlagen! 👍' : 'Finger weg! 🛑'}</h2><p className="font-bold mt-2">{result.item_name}</p></div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-4 mb-6 text-center">
+                                            <div className="bg-gray-50 p-4 rounded-xl"><p className="text-[10px] font-bold text-gray-500 uppercase">Est. Wert</p><p className="text-xl font-black">{parsePrice(result.estimated_sell_price).toFixed(2)}€</p></div>
+                                            <div className="bg-gray-50 p-4 rounded-xl"><p className="text-[10px] font-bold text-gray-500 uppercase">Max Ankauf</p><p className="text-xl font-black">{result.max_buy_price}€</p></div>
+                                            <div className="bg-green-50 p-4 rounded-xl text-green-800"><p className="text-[10px] font-bold uppercase">Gewinn</p><p className="text-xl font-black">{parsePrice(result.calculated_profit).toFixed(2)}€</p></div>
+                                        </div>
+                                        <div className="space-y-6">
+                                            <div><h3 className="font-bold mb-2">Marktanalyse</h3><p className="text-sm bg-gray-50 p-4 rounded-xl">{result.deep_analysis}</p></div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="bg-blue-50 p-4 rounded-xl"><h3 className="font-bold text-blue-800 text-xs mb-2">Action Plan</h3><ul className="text-xs text-blue-900 space-y-1">{Array.isArray(result.action_steps) ? result.action_steps.map((s,i)=><li key={i}>{i+1}. {s}</li>) : <li>{result.action_steps}</li>}</ul></div>
+                                                <div className="bg-red-50 p-4 rounded-xl"><h3 className="font-bold text-red-800 text-xs mb-2">Red Flags</h3><ul className="text-xs text-red-900 space-y-1">{Array.isArray(result.red_flags) ? result.red_flags.map((f,i)=><li key={i}>- {f}</li>) : <li>{result.red_flags}</li>}</ul></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Card>
+                            )}
+                            {!result && !loading && <EmptyState icon="fa-scale-balanced" title="Deal Checker" description="Füge Daten ein, um Deals knallhart zu kalkulieren." />}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- SNIPER ---
+        const Sniper = () => {
+            const { alerts, actions, addToast } = useAppContext();
+            const [brand, setBrand] = useState("");
+            const addAlert = () => { if(brand.trim()) { actions.addAlert({ brand: brand.trim() }); setBrand(""); addToast("Gespeichert"); }};
+            return (
+                <div className="p-6 lg:p-12 max-w-5xl mx-auto h-full overflow-y-auto pb-32">
+                    <h1 className="text-4xl font-extrabold mb-8">Sniper & Trends</h1>
+                    <Card className="bg-gray-900 text-white mb-8 p-6 flex flex-col sm:flex-row gap-4"><input type="text" value={brand} onChange={e=>setBrand(e.target.value)} placeholder="Z.B. Carhartt" className="flex-1 bg-gray-800 border-none rounded-xl p-4 text-white outline-none" /><Button onClick={addAlert} className="!bg-red-600">Speichern</Button></Card>
+                    <div className="space-y-4">
+                        {alerts.map(a => a && (
+                            <Card key={a.id} className="p-5 flex justify-between items-center bg-white border border-gray-200">
+                                <p className="font-bold text-lg flex-1">{a.brand}</p>
+                                <div className="flex gap-2">
+                                    <Button variant="vinted" onClick={()=>window.open(`https://www.vinted.de/vetements?search_text=${encodeURIComponent(a.brand)}&order=newest_first`)} icon="fa-shirt">Vinted</Button>
+                                    <Button variant="secondary" onClick={()=>window.open(`https://www.kleinanzeigen.de/s-sortierung:erstellungsdatum/${encodeURIComponent(a.brand).replace(/%20/g, '-')}/k0`)} icon="fa-tag">Ebay</Button>
+                                    <Button variant="danger" onClick={()=>actions.deleteAlert(a.id)} icon="fa-trash"></Button>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- SMART REPLY ---
         const SmartReply = () => {
             const { addToast, settings } = useAppContext();
             const [price, setPrice] = useState("");
             const [date, setDate] = useState("morgen");
             const [lang, setLang] = useState("DE");
 
-            const T = {
-                DE: {
-                    fav: `Moin! 👋\nFreut mich sehr, dass dir der Artikel gefällt. \nLass es mich gerne wissen, falls du noch weitere Infos oder Detailbilder brauchst, oder wenn wir über den Preis quatschen wollen.\n\n${settings?.signature || ''}`,
-                    low: `Moin! 👋\nDanke für dein Angebot. Für den Preis möchte ich es aktuell leider noch nicht abgeben.\nMeine absolute Schmerzgrenze läge bei [PREIS] €. Wäre das für dich auch noch okay?\n\n${settings?.signature || ''}`,
-                    bought: `Moin! 👋\nVielen Dank für deinen Kauf und das Vertrauen!\nDein Paket geht spätestens [DATUM] sicher verpackt auf die Reise. Ich melde mich kurz bei dir, sobald es bei der Post liegt.\n\n${settings?.signature || ''}`,
-                    sent: `Moin! 👋\nGute Nachrichten: Dein Paket ist auf dem Weg! Die Sendungsnummer (falls versichert) ist im System hinterlegt.\nSag mir gerne kurz Bescheid, wenn es gut angekommen ist.\n\n${settings?.signature || ''}`
-                },
-                EN: {
-                    fav: `Hi there! 👋\nSo glad you like the item. \nLet me know if you need any more details, pictures, or if you'd like to discuss the price.\n\n${settings?.signature || ''}`,
-                    low: `Hi! 👋\nThanks for your offer. I can't let it go for that price right now.\nMy absolute limit would be [PREIS] €. Would that still work for you?\n\n${settings?.signature || ''}`,
-                    bought: `Hi! 👋\nThank you so much for your purchase!\nYour package will be safely packed and shipped by [DATUM] at the latest. I'll let you know as soon as it's on the way.\n\n${settings?.signature || ''}`,
-                    sent: `Hi! 👋\nGood news: Your package is on its way! The tracking number (if insured) is updated in the system.\nPlease let me know when it arrives safely.\n\n${settings?.signature || ''}`
-                },
-                FR: {
-                    fav: `Salut ! 👋\nRavi que l'article te plaise. \nN'hésite pas si tu as besoin de plus d'infos, de photos, ou si tu veux discuter du prix.\n\n${settings?.signature || ''}`,
-                    low: `Salut ! 👋\nMerci pour ton offre. À ce prix, je préfère le garder pour le moment.\nMon dernier prix serait de [PREIS] €. Est-ce que ça t'irait ?\n\n${settings?.signature || ''}`,
-                    bought: `Salut ! 👋\nMerci beaucoup pour ton achat !\nTon colis sera bien emballé et expédié [DATUM] au plus tard. Je te préviens dès qu'il est en route.\n\n${settings?.signature || ''}`,
-                    sent: `Salut ! 👋\nBonne nouvelle : ton colis est en route ! Le numéro de suivi est dans le système.\nDis-moi quand tu l'auras bien reçu.\n\n${settings?.signature || ''}`
-                },
-                NL: {
-                    fav: `Hoi! 👋\nLeuk dat je het artikel mooi vindt. \nLaat het me weten als je meer info of foto's nodig hebt, of als je over de prijs wilt praten.\n\n${settings?.signature || ''}`,
-                    low: `Hoi! 👋\nBedankt voor je bod. Voor die prijs wil ik het momenteel nog niet wegdoen.\nMijn absolute bodemprijs is [PREIS] €. Zou dat ook goed voor je zijn?\n\n${settings?.signature || ''}`,
-                    bought: `Hoi! 👋\nHeel erg bedankt voor je aankoop!\nJe pakketje gaat uiterlijk [DATUM] veilig verpakt op de post. Ik stuur je een berichtje zodra het onderweg is.\n\n${settings?.signature || ''}`,
-                    sent: `Hoi! 👋\nGoed nieuws: je pakket is onderweg! Het trackingnummer staat in het systeem.\nLaat je me even weten als het goed is aangekomen?\n\n${settings?.signature || ''}`
-                }
+            const txts = {
+                DE: { f: "Moin! 👋 Freut mich, dass es dir gefällt.", l: `Moin! 👋 Schmerzgrenze liegt bei [PREIS] €. Deal?`, b: `Moin! 👋 Paket geht [DATUM] raus.`, s: `Moin! 👋 Paket ist unterwegs!` },
+                EN: { f: "Hi! 👋 Glad you like it.", l: `Hi! 👋 My limit is [PREIS] €. Deal?`, b: `Hi! 👋 Package shipped by [DATUM].`, s: `Hi! 👋 Package is on the way!` },
+                FR: { f: "Salut ! 👋 Ravi que ça te plaise.", l: `Salut ! 👋 Mon dernier prix est [PREIS] €.`, b: `Salut ! 👋 Expédié [DATUM] au plus tard.`, s: `Salut ! 👋 Colis en route !` },
+                NL: { f: "Hoi! 👋 Leuk dat je het mooi vindt.", l: `Hoi! 👋 Bodemprijs is [PREIS] €. Deal?`, b: `Hoi! 👋 Pakketje gaat [DATUM] op de post.`, s: `Hoi! 👋 Pakket is onderweg!` }
             };
 
-            const activeLang = T[lang];
-            const templates = [
-                { id: 'fav', icon: 'fa-heart text-red-500', bg: 'bg-red-50', title: 'Favorit / Interesse', text: activeLang.fav },
-                { id: 'low', icon: 'fa-arrow-trend-down text-orange-500', bg: 'bg-orange-50', title: 'Gegenangebot', hasPrice: true, text: activeLang.low },
-                { id: 'bought', icon: 'fa-bag-shopping text-vinted-500', bg: 'bg-vinted-50', title: 'Nach dem Kauf', hasDate: true, text: activeLang.bought },
-                { id: 'sent', icon: 'fa-truck-fast text-blue-500', bg: 'bg-blue-50', title: 'Paket verschickt', text: activeLang.sent },
+            const tpls = [
+                { id: 'f', title: 'Interesse', icon: 'fa-heart text-red-500' }, { id: 'l', title: 'Gegenangebot', icon: 'fa-arrow-trend-down text-orange-500', hp:true },
+                { id: 'b', title: 'Nach dem Kauf', icon: 'fa-bag-shopping text-vinted-500', hd:true }, { id: 's', title: 'Verschickt', icon: 'fa-truck-fast text-blue-500' }
             ];
 
             return (
-                <div className="p-6 lg:p-12 max-w-6xl mx-auto h-full overflow-y-auto animate-fade-in no-scrollbar pb-32">
-                    <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-                        <div>
-                            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Smart Reply</h1>
-                            <p className="text-gray-500 mt-1 font-medium text-lg">Instant Antworten in 4 Sprachen. Null Wartezeit.</p>
-                        </div>
-                        <Card noPadding className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-gray-100 shadow-sm border border-gray-200">
-                            <div className="px-5 py-4 flex items-center gap-3 bg-white">
-                                <i className="fa-solid fa-euro-sign text-gray-400 text-sm"></i>
-                                <input type="number" placeholder="Preis (z.B. 15)" value={price} onChange={e=>setPrice(e.target.value)} className="outline-none font-bold text-sm w-20 text-gray-900 placeholder-gray-300" />
-                            </div>
-                            <div className="px-5 py-4 flex items-center gap-3 bg-white">
-                                <i className="fa-regular fa-calendar text-gray-400 text-sm"></i>
-                                <input type="text" placeholder="Tag (z.B. morgen)" value={date} onChange={e=>setDate(e.target.value)} className="outline-none font-bold text-sm w-28 text-gray-900 placeholder-gray-300" />
-                            </div>
-                            <div className="px-5 py-4 flex items-center gap-3 bg-gray-50 cursor-pointer relative hover:bg-gray-100 transition-colors">
-                                <i className="fa-solid fa-globe text-vinted-500 text-sm"></i>
-                                <select value={lang} onChange={e=>setLang(e.target.value)} className="appearance-none outline-none font-extrabold text-sm text-gray-900 cursor-pointer bg-transparent pr-4 w-28">
-                                    <option value="DE">Deutsch</option><option value="EN">English</option><option value="FR">Français</option><option value="NL">Nederlands</option>
-                                </select>
-                                <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none"></i>
-                            </div>
-                        </Card>
-                    </div>
-
+                <div className="p-6 lg:p-12 max-w-6xl mx-auto h-full overflow-y-auto pb-32">
+                    <h1 className="text-4xl font-extrabold mb-8">Smart Reply</h1>
+                    <Card noPadding className="flex divide-x border mb-8">
+                        <div className="p-4 flex-1 flex gap-3 items-center"><i className="fa-solid fa-euro-sign"></i><input type="number" placeholder="Preis" value={price} onChange={e=>setPrice(e.target.value)} className="w-full outline-none font-bold" /></div>
+                        <div className="p-4 flex-1 flex gap-3 items-center"><i className="fa-regular fa-calendar"></i><input type="text" placeholder="Datum" value={date} onChange={e=>setDate(e.target.value)} className="w-full outline-none font-bold" /></div>
+                        <div className="p-4 flex-1 flex gap-3 items-center bg-gray-50"><select value={lang} onChange={e=>setLang(e.target.value)} className="bg-transparent w-full font-bold outline-none"><option value="DE">Deutsch</option><option value="EN">English</option><option value="FR">Français</option><option value="NL">Nederlands</option></select></div>
+                    </Card>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {templates.map((tpl, i) => {
-                            let text = tpl.text;
-                            if(tpl.hasPrice) text = text.replace('[PREIS]', price || 'XX');
-                            if(tpl.hasDate) text = text.replace('[DATUM]', date || 'schnellstmöglich');
+                        {tpls.map(t => {
+                            let text = txts[lang][t.id];
+                            if(t.hp) text = text.replace('[PREIS]', price||'X'); if(t.hd) text = text.replace('[DATUM]', date||'X');
+                            text += `\n\n${settings?.signature || ''}`;
                             return (
-                                <Card key={tpl.id} noPadding className="flex flex-col border border-gray-200 group hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 animate-slide-up" style={{animationDelay: `${i*100}ms`}}>
-                                    <div className="p-5 border-b border-gray-100 flex items-center gap-4 bg-white">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner-light border border-white ${tpl.bg}`}><i className={`fa-solid ${tpl.icon} text-xl`}></i></div>
-                                        <h3 className="font-extrabold text-gray-900 text-lg">{tpl.title}</h3>
-                                    </div>
-                                    <div className="p-8 flex-1 bg-gray-50/50"><p className="whitespace-pre-wrap text-base text-gray-700 font-medium leading-relaxed">{text}</p></div>
-                                    <div className="p-5 border-t border-gray-100 bg-white">
-                                        <Button variant="secondary" onClick={() => {navigator.clipboard.writeText(text); addToast("Kopiert!");}} className="w-full shadow-none group-hover:bg-gray-900 group-hover:text-white transition-colors border-transparent group-hover:border-gray-900" size="lg" icon="fa-copy">Text Kopieren</Button>
-                                    </div>
+                                <Card key={t.id} className="p-6 flex flex-col">
+                                    <h3 className="font-bold mb-4 flex items-center gap-2"><i className={`fa-solid ${t.icon}`}></i> {t.title}</h3>
+                                    <p className="whitespace-pre-wrap text-sm mb-6 flex-1 bg-gray-50 p-4 rounded-xl">{text}</p>
+                                    <Button onClick={()=>{navigator.clipboard.writeText(text); addToast("Kopiert!");}} className="w-full" variant="secondary">Kopieren</Button>
                                 </Card>
                             )
                         })}
@@ -1036,154 +588,108 @@
             );
         };
 
-        // --- SETTINGS (Mit Export / Import) ---
-        const Settings = () => {
-            const { settings, actions, addToast } = useAppContext();
-            const [localData, setLocalData] = useState(settings || {});
+        // --- ROUTENPLANER ---
+        const ShippingRoutePlanner = () => {
+            const { routeStops, actions, addToast } = useAppContext();
+            const [start, setStart] = useState("");
+            return (
+                <div className="p-6 lg:p-12 max-w-5xl mx-auto h-full overflow-y-auto pb-32">
+                    <h1 className="text-4xl font-extrabold mb-8">Routenplaner</h1>
+                    <Card className="p-8 mb-8"><Input label="Startpunkt" value={start} onChange={e=>setStart(e.target.value)} placeholder="Zuhause..." /></Card>
+                    <Card className="p-8"><h2 className="font-bold mb-4">Shops hinzufügen</h2>
+                        <div className="flex gap-2 mb-6">{VINTED_DATA.carriers.map(c=><Button key={c} variant="secondary" onClick={()=>actions.addRouteStop(c)}>+ {c}</Button>)}</div>
+                        <div className="space-y-4 mb-6">
+                            {(routeStops||[]).map(s=> s && (
+                                <div key={s.id} className="flex gap-4 items-center bg-gray-50 p-4 rounded-xl">
+                                    <span className="font-bold w-20">{s.carrier}</span><Input value={s.notes} onChange={e=>actions.updateRouteStop(s.id, e.target.value)} placeholder="Pakete notieren..." className="flex-1" /><button onClick={()=>actions.deleteRouteStop(s.id)} className="text-red-500 p-2"><i className="fa-solid fa-trash"></i></button>
+                                </div>
+                            ))}
+                        </div>
+                        <Button variant="vinted" className="w-full" size="lg" onClick={()=>{ if(!start) return addToast("Startpunkt fehlt", "warning"); window.open(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(start)}&waypoints=${routeStops.filter(Boolean).map(s=>encodeURIComponent(s.carrier+' Paketshop')).join('|')}`); }}>Route starten</Button>
+                    </Card>
+                </div>
+            );
+        };
 
-            const save = () => { actions.updateSettings(localData); addToast("Einstellungen gespeichert"); };
-            const triggerFileSelect = () => document.getElementById('importFile').click();
-
-            const handleImport = (e) => {
-                const file = e.target.files[0];
-                if(!file) return;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const parsed = JSON.parse(e.target.result);
-                        actions.importData(parsed);
-                    } catch(err) {
-                        addToast("Die Datei ist beschädigt oder ungültig.", "error");
-                    }
-                };
-                reader.readAsText(file);
-            };
+        // --- PROFIT TRACKER ---
+        const ProfitTracker = () => {
+            const { listings } = useAppContext();
+            const sold = (listings||[]).filter(l => l && l.status === 'sold');
+            const rev = sold.reduce((s, l) => s + parsePrice(l?.price), 0);
+            const cost = sold.reduce((s, l) => s + parsePrice(l?.buy_price), 0);
+            const profit = rev - cost;
+            const margin = rev > 0 ? ((profit / rev) * 100).toFixed(1) : 0;
 
             return (
-                <div className="p-6 lg:p-12 max-w-4xl mx-auto h-full overflow-y-auto animate-fade-in pb-32">
-                    <div className="mb-10 animate-slide-in-right">
-                        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Einstellungen</h1>
-                        <p className="text-gray-500 mt-2 font-medium text-lg">Personalisiere und sichere dein VintedPro System.</p>
-                    </div>
-
-                    <div className="space-y-8 animate-slide-up" style={{animationDelay: '100ms'}}>
-                        
-                        <Card className="p-8 md:p-10 border-t-4 border-t-vinted-500 shadow-sm">
-                            <h2 className="text-xl font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4"><i className="fa-solid fa-hard-drive text-vinted-500 mr-2"></i> Data Management (Backup)</h2>
-                            <p className="text-sm text-gray-500 mb-8 font-medium leading-relaxed">Da VintedPro alle Daten lokal in deinem Browser speichert, solltest du regelmäßig ein Backup erstellen. So kannst du deine Daten auf einen anderen PC übertragen oder vor Datenverlust schützen.</p>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-inner-light">
-                                    <h3 className="font-bold text-gray-900 mb-2">Daten Exportieren</h3>
-                                    <p className="text-xs text-gray-500 mb-4">Lade Inventar, Snipes und Routen als .json herunter.</p>
-                                    <Button onClick={actions.exportData} variant="primary" className="w-full" icon="fa-cloud-arrow-down">Backup erstellen</Button>
-                                </div>
-                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-inner-light">
-                                    <h3 className="font-bold text-gray-900 mb-2">Daten Importieren</h3>
-                                    <p className="text-xs text-gray-500 mb-4">Stelle das System aus einer alten .json Datei wieder her.</p>
-                                    <input type="file" id="importFile" accept=".json" className="hidden" onChange={handleImport} />
-                                    <Button onClick={triggerFileSelect} variant="secondary" className="w-full" icon="fa-cloud-arrow-up">Backup laden</Button>
-                                </div>
-                            </div>
-                        </Card>
-
-                        <Card className="p-8 md:p-10">
-                            <h2 className="text-xl font-bold text-gray-900 mb-8 border-b border-gray-100 pb-4"><i className="fa-solid fa-user text-vinted-500 mr-2"></i> Profil & Texte</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <Input label="Dein Vorname" value={localData.userName || ''} onChange={e=>setLocalData({...localData, userName: e.target.value})} icon="fa-user" />
-                                <Input label="Nachrichten-Signatur" value={localData.signature || ''} onChange={e=>setLocalData({...localData, signature: e.target.value})} icon="fa-pen-nib" />
-                            </div>
-                        </Card>
-                        
-                        <Card className="p-8 md:p-10">
-                            <h2 className="text-xl font-bold text-gray-900 mb-8 border-b border-gray-100 pb-4"><i className="fa-solid fa-microchip text-vinted-500 mr-2"></i> System (API)</h2>
-                            <div className="mb-6">
-                                <Input label="Google Gemini API Key" type="password" value={API_KEY} readOnly icon="fa-key" className="opacity-70 pointer-events-none" disabled />
-                            </div>
-                            <Select label="KI Modell (Priorität)" value={localData.apiModel || 'gemini-1.5-flash'} onChange={e=>setLocalData({...localData, apiModel: e.target.value})} options={['gemini-1.5-flash', 'gemini-flash-latest', 'gemini-1.5-pro']} icon="fa-server" />
-                            <div className="bg-blue-50/80 p-5 rounded-2xl border border-blue-100 flex gap-4 items-start mt-6 shadow-sm">
-                                <i className="fa-solid fa-shield-halved text-blue-600 mt-0.5 text-lg"></i>
-                                <p className="text-sm text-blue-900 leading-relaxed font-medium">Dein System testet automatisch Fallback-Modelle mit Exponential Backoff (Schutz vor API-Limits und Abstürzen).</p>
-                            </div>
-                        </Card>
-
-                        <div className="flex justify-end pt-4">
-                            <Button onClick={save} icon="fa-save" size="lg" className="px-10 shadow-lg">Einstellungen speichern</Button>
-                        </div>
+                <div className="p-6 lg:p-12 max-w-7xl mx-auto h-full overflow-y-auto pb-32">
+                    <h1 className="text-4xl font-extrabold mb-10">Kassenbuch</h1>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+                        <Card className="p-6"><p className="text-[10px] font-bold text-gray-500 uppercase">Umsatz</p><h3 className="text-3xl font-black">{rev.toFixed(2)}€</h3></Card>
+                        <Card className="p-6"><p className="text-[10px] font-bold text-gray-500 uppercase">Ausgaben</p><h3 className="text-3xl font-black text-red-500">{cost.toFixed(2)}€</h3></Card>
+                        <Card className="p-6"><p className="text-[10px] font-bold text-gray-500 uppercase">Marge</p><h3 className="text-3xl font-black text-vinted-600">{margin}%</h3></Card>
+                        <Card className="p-6 bg-gray-900 text-white"><p className="text-[10px] font-bold text-gray-400 uppercase">Netto-Gewinn</p><h3 className="text-3xl font-black">{profit.toFixed(2)}€</h3></Card>
                     </div>
                 </div>
             );
         };
 
-        // ==========================================
-        // 5. MAIN APP LAYOUT (LÜCKENLOS!)
-        // ==========================================
+        // --- SETTINGS ---
+        const Settings = () => {
+            const { settings, actions, addToast } = useAppContext();
+            const [local, setLocal] = useState(settings||{});
+            return (
+                <div className="p-6 lg:p-12 max-w-3xl mx-auto h-full overflow-y-auto pb-32">
+                    <h1 className="text-4xl font-extrabold mb-8">Einstellungen</h1>
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                        <Card className="p-6 text-center cursor-pointer" onClick={actions.exportData}><i className="fa-solid fa-download text-2xl mb-2 text-vinted-600"></i><p className="font-bold">Backup Export</p></Card>
+                        <Card className="p-6 text-center cursor-pointer" onClick={()=>document.getElementById('fileIn').click()}><i className="fa-solid fa-upload text-2xl mb-2 text-vinted-600"></i><p className="font-bold">Backup Import</p><input type="file" id="fileIn" className="hidden" accept=".json" onChange={e => { const r = new FileReader(); r.onload = ev => actions.importData(JSON.parse(ev.target.result)); r.readAsText(e.target.files[0]); }} /></Card>
+                    </div>
+                    <Card className="p-8 space-y-6">
+                        <Input label="Name" value={local.userName} onChange={e=>setLocal({...local, userName: e.target.value})} />
+                        <Input label="Signatur" value={local.signature} onChange={e=>setLocal({...local, signature: e.target.value})} />
+                        <Select label="KI Modell" value={local.apiModel} onChange={e=>setLocal({...local, apiModel: e.target.value})} options={['gemini-1.5-flash', 'gemini-flash-latest', 'gemini-1.5-pro']} />
+                        <Button onClick={()=> {actions.updateSettings(local); addToast("Gespeichert");}} className="w-full" size="lg">Speichern</Button>
+                    </Card>
+                </div>
+            );
+        };
+
+        // --- MAIN ROUTER ---
         const MainApp = () => {
-            const [view, setView] = useState('analyze'); 
-            const [isSidebarOpen, setSidebarOpen] = useState(false);
+            const [view, setView] = useState('dashboard'); 
+            const [isOpen, setIsOpen] = useState(false);
             const { settings } = useAppContext();
 
-            // Sichert ab, dass die App bei undefiniertem View nicht crasht
-            const menu = {
-                dashboard: { icon: 'fa-grip', label: 'Dashboard', component: <Dashboard setView={setView} /> },
-                analyze: { icon: 'fa-wand-magic-sparkles', label: 'Analyse Studio', component: <AnalyzeStudio /> },
-                history: { icon: 'fa-box-archive', label: 'Inventar', component: <Inventory setView={setView} /> },
-                dealchecker: { icon: 'fa-scale-balanced', label: 'Deal Checker Pro', component: <DealChecker /> },
-                sniper: { icon: 'fa-crosshairs', label: 'Sniper & Trends', component: <Sniper /> },
-                smartreply: { icon: 'fa-comment-dots', label: 'Smart Reply', component: <SmartReply /> },
-                shipping: { icon: 'fa-route', label: 'Routenplaner', component: <ShippingRoutePlanner /> },
-                profit: { icon: 'fa-chart-pie', label: 'Profit Tracker', component: <ProfitTracker /> },
-                settings: { icon: 'fa-gear', label: 'Einstellungen', component: <Settings /> },
+            const renderView = () => {
+                switch(view) {
+                    case 'dashboard': return <Dashboard setView={setView} />;
+                    case 'analyze': return <AnalyzeStudio />;
+                    case 'history': return <Inventory setView={setView} />;
+                    case 'dealchecker': return <DealChecker />;
+                    case 'sniper': return <Sniper />;
+                    case 'smartreply': return <SmartReply />;
+                    case 'shipping': return <ShippingRoutePlanner />;
+                    case 'profit': return <ProfitTracker />;
+                    case 'settings': return <Settings />;
+                    default: return <Dashboard setView={setView} />;
+                }
             };
 
-            const activeComponent = menu[view]?.component || <div className="p-10 text-center"><i className="fa-solid fa-circle-notch fa-spin text-3xl"></i><p className="mt-4 font-bold">Lade Modul...</p></div>;
-
             return (
-                <div className="flex h-screen w-full overflow-hidden bg-transparent relative z-10">
-                    <div className={`fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 transition-opacity lg:hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSidebarOpen(false)}></div>
-                    
-                    <aside className={`fixed lg:relative w-[280px] bg-white/80 backdrop-blur-xl border-r border-white/50 h-full flex flex-col z-50 transition-transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-                        <div className="h-24 flex items-center px-8 border-b border-gray-200/50 shrink-0">
-                            <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white mr-4"><i className="fa-solid fa-shirt"></i></div>
-                            <span className="text-2xl font-extrabold">Vinted<span className="text-vinted-600">Pro</span></span>
-                        </div>
-                        
-                        <nav className="flex-1 py-8 px-4 space-y-1.5 overflow-y-auto no-scrollbar">
-                            <div className="px-4 mb-3 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Tools</div>
-                            {Object.entries(menu).map(([id, item]) => (
-                                <button key={id} onClick={() => { setView(id); setSidebarOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all font-bold text-sm ${view === id ? 'bg-white text-vinted-600 shadow-sm border border-gray-100' : 'text-gray-500 hover:bg-white/50'}`}>
-                                    <i className={`fa-solid ${item.icon} w-6`}></i>{item.label}
-                                </button>
+                <div className="flex h-screen w-full bg-[#f4f5f7]">
+                    {isOpen && <div className="fixed inset-0 bg-gray-900/40 z-40 lg:hidden" onClick={() => setIsOpen(false)}></div>}
+                    <aside className={`fixed lg:relative w-[280px] bg-white border-r h-full flex flex-col z-50 transition-transform ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+                        <div className="h-20 flex items-center px-8 border-b"><div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center text-white mr-3"><i className="fa-solid fa-shirt"></i></div><span className="text-xl font-extrabold">Vinted<span className="text-vinted-600">Pro</span></span></div>
+                        <nav className="flex-1 py-6 px-4 space-y-1 overflow-y-auto no-scrollbar">
+                            {[ {id:'dashboard',i:'fa-grip',l:'Dashboard'}, {id:'analyze',i:'fa-wand-magic-sparkles',l:'Analyse'}, {id:'history',i:'fa-box-archive',l:'Inventar'}, {id:'dealchecker',i:'fa-scale-balanced',l:'Deal Checker'}, {id:'sniper',i:'fa-crosshairs',l:'Sniper'}, {id:'smartreply',i:'fa-comment-dots',l:'Smart Reply'}, {id:'shipping',i:'fa-route',l:'Routenplaner'}, {id:'profit',i:'fa-chart-pie',l:'Kassenbuch'}, {id:'settings',i:'fa-gear',l:'Settings'} ].map(m => (
+                                <button key={m.id} onClick={() => { setView(m.id); setIsOpen(false); }} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-sm ${view === m.id ? 'bg-gray-100 text-vinted-600' : 'text-gray-500 hover:bg-gray-50'}`}><i className={`fa-solid ${m.i} w-6`}></i>{m.l}</button>
                             ))}
                         </nav>
-
-                        {/* Vinted Direct Link Global */}
-                        <div className="px-4 pb-4">
-                            <button onClick={()=>window.open('https://www.vinted.de', '_blank')} className="w-full flex items-center justify-center gap-2 bg-vinted-50 hover:bg-vinted-100 text-vinted-700 py-3 rounded-2xl font-bold text-sm transition-colors border border-vinted-200">
-                                <i className="fa-solid fa-arrow-up-right-from-square"></i> Vinted.de öffnen
-                            </button>
-                        </div>
-
-                        <div className="p-6 border-t border-gray-200/50">
-                            <div className="flex items-center gap-4 bg-white/60 p-3 rounded-2xl border border-white shadow-sm cursor-pointer hover:bg-white transition-colors" onClick={()=>setView('settings')}>
-                                <img src={`https://ui-avatars.com/api/?name=${settings?.userName || 'Rico'}&background=f3e8ff&color=9333ea&bold=true`} className="w-10 h-10 rounded-xl" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-extrabold truncate">{settings?.userName || 'Rico'}</p>
-                                    <p className="text-[10px] font-bold text-green-500"><i className="fa-solid fa-circle animate-pulse"></i> Pro</p>
-                                </div>
-                            </div>
-                        </div>
+                        <div className="p-4 border-t"><div className="flex items-center gap-3 cursor-pointer" onClick={()=>setView('settings')}><div className="w-10 h-10 bg-vinted-100 rounded-full flex items-center justify-center text-vinted-600 font-bold">{settings?.userName?.charAt(0)||'R'}</div><div className="flex-1"><p className="text-sm font-bold truncate">{settings?.userName||'Rico'}</p><p className="text-[10px] text-green-500 font-bold">Pro</p></div></div></div>
                     </aside>
-
-                    <main className="flex-1 flex flex-col min-w-0 h-full relative z-0">
-                        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200/50 flex items-center px-4 shrink-0 lg:hidden z-20">
-                            <button onClick={() => setSidebarOpen(true)} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100"><i className="fa-solid fa-bars text-lg"></i></button>
-                            <span className="font-bold ml-2">{menu[view]?.label}</span>
-                            <div className="w-10"></div>
-                        </header>
-                        <div className="flex-1 relative z-10 overflow-hidden">
-                            {activeComponent}
-                        </div>
+                    <main className="flex-1 flex flex-col h-full">
+                        <header className="h-16 bg-white border-b flex items-center px-4 lg:hidden"><button onClick={() => setIsOpen(true)} className="w-10 h-10 flex items-center justify-center"><i className="fa-solid fa-bars text-xl"></i></button></header>
+                        <div className="flex-1 relative overflow-hidden">{renderView()}</div>
                     </main>
                 </div>
             );
@@ -1195,3 +701,5 @@
     </script>
 </body>
 </html>
+
+```
