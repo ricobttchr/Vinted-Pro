@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VintedPro - Ultimate Seller OS</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        vinted: {
+                            50: '#faf5ff', 100: '#f3e8ff', 200: '#e9d5ff',
+                            300: '#d8b4fe', 400: '#c084fc', 500: '#a855f7',
+                            600: '#9333ea', 700: '#7e22ce', 800: '#6b21a8', 900: '#581c87',
+                        }
+                    },
+                    boxShadow: {
+                        'xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                        'sm': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                        'card': '0 8px 30px rgba(0, 0, 0, 0.04), 0 4px 10px rgba(0, 0, 0, 0.02)',
+                        'inner-light': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.02)',
+                        'floating': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'slide-in-right': 'slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+                        slideUp: { '0%': { opacity: 0, transform: 'translateY(20px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+                        slideInRight: { '0%': { opacity: 0, transform: 'translateX(30px)' }, '100%': { opacity: 1, transform: 'translateX(0)' } }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { 
+            background-color: #f4f5f7; 
+            color: #111827; 
+            overflow: hidden; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        *:focus-visible { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #d8b4fe; }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #9333ea; cursor: pointer; margin-top: -8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.1s; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #e5e7eb; border-radius: 4px; }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen font-sans text-gray-900 selection:bg-vinted-200 selection:text-vinted-900 relative">
+    
+    <div id="root" class="h-full w-full relative z-10"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, createContext, useContext, Component } = React;
+
+        // ==========================================
+        // 0. ABSOLUTE ROBUSTHEIT & ERROR BOUNDARY
+        // ==========================================
+        const parsePrice = (val) => {
+            if (val === undefined || val === null || val === '') return 0;
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
+            const cleaned = String(val).replace(/[^\d.,-]/g, '').replace(',', '.');
+            const num = parseFloat(cleaned);
+            return isNaN(num) ? 0 : num;
+        };
+
+        class ErrorBoundary extends Component {
+            constructor(props) { super(props); this.state = { hasError: false, error: null, errorInfo: null }; }
+            static getDerivedStateFromError(error) { return { hasError: true, error }; }
+            componentDidCatch(error, errorInfo) { this.setState({ errorInfo }); }
+            
+            render() {
+                if (this.state.hasError) {
+                    return (
+                        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-8 text-center relative z-50">
+                            <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-6 shadow-sm border border-red-200">
+                                <i className="fa-solid fa-shield-cat text-4xl text-red-500"></i>
+                            </div>
+                            <h1 className="text-3xl font-extrabold text-gray-900 mb-2">System Error Guard</h1>
+                            <p className="text-gray-600 mb-6 max-w-lg font-medium">Die App hat sich vor einem Absturz geschützt. Die Ursache war ein defekter Datensatz. Ein Klick auf den Button repariert das System.</p>
+                            
+                            <div className="bg-white p-4 rounded-xl shadow-sm border border-red-200 text-left max-w-2xl w-full mb-8">
+                                <p className="font-bold text-red-600 text-sm mb-2">Technischer Fehlerbericht:</p>
+                                <textarea readOnly className="w-full h-32 p-3 bg-red-50 text-red-800 text-xs font-mono rounded-lg border border-red-100 resize-none outline-none" value={`${this.state.error?.toString()}\n\n${this.state.errorInfo?.componentStack}`}></textarea>
+                            </div>
+                            
+                            <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="bg-gray-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl shadow-floating transition-all hover:-translate-y-1">
+                                <i className="fa-solid fa-rotate-right mr-2"></i> Cache leeren & Neustarten
+                            </button>
+                        </div>
+                    );
+                }
+                return this.props.children; 
+            }
+        }
+
+        // ==========================================
+        // 1. CONFIG & API 
+        // ==========================================
+        const API_KEY = "AIzaSyBIcM5Tr0Z0FNTLObfQnJGmoY0JkqGblew";
+
+        const VINTED_DATA = {
+            categories: ["Damenbekleidung", "Herrenbekleidung", "Sneaker & Schuhe", "Vintage & Y2K", "Taschen & Accessoires", "Kinder & Baby", "Home & Deko", "Elektronik", "Sonstiges"],
+            conditions: ["Neu mit Etikett", "Neu ohne Etikett", "Sehr gut", "Gut", "Zufriedenstellend"],
+            colors: ["Schwarz", "Weiß", "Grau", "Blau", "Rot", "Grün", "Gelb", "Braun", "Beige", "Lila", "Pink", "Gold", "Silber", "Mehrfarbig"],
+            materials: ["Nicht angegeben", "100% Baumwolle", "Polyester", "Leder", "Kunstleder", "Seide", "Leinen", "Wolle", "Denim", "Mischgewebe"],
+            carriers: ["DHL", "Hermes", "GLS", "DPD", "PostAT"]
+        };
+
+        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve({ mimeType: file.type, data: reader.result.split(',')[1] });
+            reader.onerror = error => reject(error);
+        });
+
+        // Robust API Call with Exponential Backoff
+        const callGemini = async (prompt, images = [], customModel = "gemini-1.5-flash") => {
+            const modelsToTry = [customModel || 'gemini-1.5-flash', 'gemini-flash-latest', 'gemini-1.5-pro'];
+            let lastError = null;
+
+            for (const model of modelsToTry) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+                    const parts = [{ text: prompt }];
+                    images.forEach(img => parts.push({ inlineData: { mimeType: img.mimeType, data: img.data } }));
+
+                    const response = await fetch(url, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseMimeType: "application/json" } })
+                    });
+
+                    if (!response.ok) {
+                        const err = await response.json().catch(()=>({}));
+                        if (response.status === 429 || response.status >= 500) {
+                            await new Promise(r => setTimeout(r, 2000));
+                            lastError = new Error(`Rate Limit bei ${model}`);
+                            continue; 
+                        }
+                        throw new Error(err.error?.message || `HTTP ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    if(!data?.candidates?.[0]?.content) throw new Error("Leere Antwort der KI.");
+                    
+                    let text = data.candidates[0].content.parts[0].text;
+                    const match = text.match(/\{[\s\S]*\}/);
+                    if (match) return JSON.parse(match[0]);
+                    return JSON.parse(text);
+
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+            throw new Error(`KI-Server überlastet. Letzter Fehler: ${lastError?.message}`);
+        };
+
+        // ==========================================
+        // 2. STATE MANAGEMENT (v16)
+        // ==========================================
+        const AppContext = createContext(null);
+        
+        const AppProvider = ({ children }) => {
+            const [toasts, setToasts] = useState([]);
+            
+            const useStickyState = (defaultValue, key) => {
+                const [value, setValue] = useState(() => {
+                    try {
+                        const sticky = window.localStorage.getItem(key);
+                        if (sticky) {
+                            const parsed = JSON.parse(sticky);
+                            // Sichert ab, dass Arrays Arrays bleiben und null-Einträge gefiltert werden
+                            if (Array.isArray(defaultValue)) {
+                                return Array.isArray(parsed) ? parsed.filter(item => item !== null && item !== undefined) : defaultValue;
+                            }
+                            if(typeof parsed === 'object' && parsed !== null) return {...defaultValue, ...parsed};
+                            return parsed;
+                        }
+                    } catch (e) { window.localStorage.removeItem(key); }
+                    return defaultValue;
+                });
+                useEffect(() => { try { window.localStorage.setItem(key, JSON.stringify(value)); } catch(e){} }, [key, value]);
+                return [value, setValue];
+            };
+
+            const [listings, setListings] = useStickyState([], 'vpro_listings_v16');
+            const [alerts, setAlerts] = useStickyState([], 'vpro_alerts_v16');
+            const [routeStops, setRouteStops] = useStickyState([], 'vpro_routes_v16');
+            const [settings, setSettings] = useStickyState({ userName: 'Rico', signature: 'LG Rico 😁', apiModel: 'gemini-1.5-flash' }, 'vpro_settings_v16');
+
+            const addToast = (message, type = 'success') => {
+                const id = Date.now();
+                setToasts(prev => [...prev, { id, message, type }]);
+                setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+            };
+
+            const actions = {
+                addListing: (l) => setListings(prev => [l, ...(Array.isArray(prev) ? prev.filter(Boolean) : [])]),
+                updateListing: (id, u) => setListings(prev => (Array.isArray(prev) ? prev.filter(Boolean) : []).map(l => l?.id === id ? { ...l, ...u } : l)),
+                deleteListing: (id) => setListings(prev => (Array.isArray(prev) ? prev.filter(Boolean) : []).filter(l => l?.id !== id)),
+                
+                addAlert: (a) => setAlerts(prev => [{...a, id: Date.now()}, ...(Array.isArray(prev) ? prev.filter(Boolean) : [])]),
+                deleteAlert: (id) => setAlerts(prev => (Array.isArray(prev) ? prev.filter(Boolean) : []).filter(a => a?.id !== id)),
+
+                addRouteStop: (carrier) => setRouteStops(prev => [...(Array.isArray(prev) ? prev.filter(Boolean) : []), { id: Date.now(), carrier, notes: '' }]),
+                updateRouteStop: (id, notes) => setRouteStops(prev => (Array.isArray(prev) ? prev.filter(Boolean) : []).map(s => s?.id === id ? {...s, notes} : s)),
+                deleteRouteStop: (id) => setRouteStops(prev => (Array.isArray(prev) ? prev.filter(Boolean) : []).filter(s => s?.id !== id)),
+                clearRoute: () => setRouteStops([]),
+
+                updateSettings: (u) => setSettings(prev => ({...(prev||{}), ...u})),
+
+                // Backup Functions
+                exportData: () => {
+                    try {
+                        const data = { 
+                            listings: listings.filter(Boolean), 
+                            alerts: alerts.filter(Boolean), 
+                            routeStops: routeStops.filter(Boolean), 
+                            settings 
+                        };
+                        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `VintedPro_Backup_${new Date().toISOString().split('T')[0]}.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        addToast("Backup erfolgreich heruntergeladen!", "success");
+                    } catch(e) { addToast("Fehler beim Exportieren", "error"); }
+                },
+                importData: (jsonData) => {
+                    try {
+                        if(jsonData.listings && Array.isArray(jsonData.listings)) setListings(jsonData.listings.filter(Boolean));
+                        if(jsonData.alerts && Array.isArray(jsonData.alerts)) setAlerts(jsonData.alerts.filter(Boolean));
+                        if(jsonData.routeStops && Array.isArray(jsonData.routeStops)) setRouteStops(jsonData.routeStops.filter(Boolean));
+                        if(jsonData.settings) setSettings(prev => ({...prev, ...jsonData.settings}));
+                        
+                        addToast("Daten importiert! Lade neu...", "success");
+                        setTimeout(() => window.location.reload(), 1500);
+                    } catch(e) { addToast("Fehlerhafte Backup-Datei.", "error"); }
+                }
+            };
+
+            return (
+                <AppContext.Provider value={{ 
+                    listings: Array.isArray(listings) ? listings.filter(Boolean) : [], 
+                    alerts: Array.isArray(alerts) ? alerts.filter(Boolean) : [], 
+                    routeStops: Array.isArray(routeStops) ? routeStops.filter(Boolean) : [], 
+                    settings: settings || { userName: 'Rico', signature: 'LG Rico 😁', apiModel: 'gemini-1.5-flash' }, 
+                    actions, 
+                    addToast 
+                }}>
+                    {children}
+                    <div className="fixed bottom-6 right-6 z-[999] flex flex-col gap-3 pointer-events-none">
+                        {toasts.map(t => (
+                            <div key={t.id} className="animate-slide-up glass-effect bg-white/95 text-gray-900 px-5 py-4 rounded-2xl shadow-floating flex items-center gap-4 pointer-events-auto border-l-4 w-80 md:w-96" style={{borderLeftColor: t.type === 'error' ? '#ef4444' : t.type === 'warning' ? '#f59e0b' : '#10b981'}}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${t.type === 'error' ? 'bg-red-100 text-red-500' : t.type === 'warning' ? 'bg-amber-100 text-amber-500' : 'bg-green-100 text-green-500'}`}>
+                                    <i className={`fa-solid ${t.type === 'error' ? 'fa-xmark' : t.type === 'warning' ? 'fa-exclamation' : 'fa-check'}`}></i>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-sm leading-tight">{t.message}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </AppContext.Provider>
+            );
+        };
+        const useAppContext = () => useContext(AppContext);
+
+        // ==========================================
+        // 3. UI COMPONENTS
+        // ==========================================
+        const Card = ({ children, className = "", noPadding = false, onClick, style={} }) => (
+            <div onClick={onClick} style={style} className={`bg-white rounded-3xl shadow-card border border-gray-100 overflow-hidden ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all' : ''} ${noPadding ? '' : 'p-6 md:p-8'} ${className}`}>
+                {children}
+            </div>
+        );
+
+        const Button = ({ children, onClick, variant = 'primary', icon, loading = false, className = "", disabled = false, size="md", type="button" }) => {
+            const variants = {
+                primary: "bg-gray-900 hover:bg-black text-white shadow-md",
+                vinted: "bg-vinted-600 hover:bg-vinted-700 text-white shadow-md shadow-vinted-500/20 border border-vinted-500/50",
+                secondary: "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 shadow-sm",
+                ghost: "bg-transparent hover:bg-gray-100/50 text-gray-600 hover:text-gray-900",
+                danger: "bg-red-50 hover:bg-red-100 text-red-600 border border-red-100"
+            };
+            const sizes = { sm: "py-2 px-4 text-xs rounded-xl", md: "py-3 px-6 text-sm rounded-2xl", lg: "py-4 px-8 text-base rounded-2xl" };
+            return (
+                <button type={type} onClick={onClick} disabled={disabled || loading} className={`relative flex items-center justify-center font-bold transition-all duration-200 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed group ${variants[variant]} ${sizes[size]} ${className}`}>
+                    {loading && <div className="absolute inset-0 flex items-center justify-center bg-inherit z-10 rounded-inherit"><i className="fa-solid fa-circle-notch fa-spin text-lg"></i></div>}
+                    <span className={`flex items-center gap-2 relative z-10 ${loading ? 'opacity-0' : 'opacity-100'}`}>
+                        {icon && <i className={`fa-solid ${icon}`}></i>} <span>{children}</span>
+                    </span>
+                </button>
+            );
+        };
+
+        const Input = ({ label, type="text", value, onChange, placeholder, icon, multiline=false, rows=4, className="", disabled=false, list }) => (
+            <div className={`flex flex-col gap-1.5 ${className}`}>
+                {label && <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1">{label}</label>}
+                <div className="relative group">
+                    {icon && <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-vinted-500 transition-colors"><i className={`fa-solid ${icon}`}></i></div>}
+                    {multiline ? (
+                        <textarea rows={rows} value={value} onChange={onChange} disabled={disabled} placeholder={placeholder} className={`block w-full rounded-2xl border border-gray-200 bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 transition-all p-3.5 sm:text-sm shadow-inner-light ${icon ? 'pl-11' : ''} resize-none ${disabled?'opacity-50':''}`}></textarea>
+                    ) : (
+                        <input type={type} value={value} onChange={onChange} disabled={disabled} placeholder={placeholder} list={list} className={`block w-full rounded-2xl border border-gray-200 bg-gray-50/50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 transition-all p-3.5 sm:text-sm shadow-inner-light ${icon ? 'pl-11' : ''} ${disabled?'opacity-50':''}`} />
+                    )}
+                </div>
+            </div>
+        );
+
+        const Select = ({ label, value, onChange, options, icon, className="" }) => (
+            <div className={`flex flex-col gap-1.5 ${className}`}>
+                {label && <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1">{label}</label>}
+                <div className="relative group">
+                    {icon && <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-vinted-500 transition-colors"><i className={`fa-solid ${icon}`}></i></div>}
+                    <select value={value} onChange={onChange} className={`appearance-none block w-full rounded-2xl border border-gray-200 bg-gray-50/50 text-gray-900 font-semibold focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 transition-all p-3.5 pr-10 sm:text-sm shadow-inner-light ${icon ? 'pl-11' : ''} cursor-pointer`}>
+                        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400"><i className="fa-solid fa-chevron-down text-xs"></i></div>
+                </div>
+            </div>
+        );
+
+        const Badge = ({ children, color = 'gray', className = "" }) => {
+            const colors = {
+                gray: "bg-gray-100 text-gray-700 border-gray-200", green: "bg-green-50 text-green-700 border-green-200",
+                vinted: "bg-vinted-50 text-vinted-700 border-vinted-200", amber: "bg-amber-50 text-amber-700 border-amber-200",
+                red: "bg-red-50 text-red-700 border-red-200", blue: "bg-blue-50 text-blue-700 border-blue-200"
+            };
+            return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold border ${colors[color]} ${className}`}>{children}</span>;
+        };
+
+        const EmptyState = ({ icon, title, description, action }) => (
+            <div className="py-16 px-6 text-center flex flex-col items-center justify-center bg-white/50 rounded-3xl border border-dashed border-gray-300">
+                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-gray-300 text-4xl mb-4 shadow-sm border border-gray-100">
+                    <i className={`fa-solid ${icon}`}></i>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
+                <p className="text-sm text-gray-500 max-w-sm mb-6 leading-relaxed font-medium">{description}</p>
+                {action}
+            </div>
+        );
+
+        // ==========================================
+        // 4. VIEWS 
+        // ==========================================
+
+        // --- DASHBOARD ---
+        const Dashboard = ({ setView }) => {
+            const { listings, settings } = useAppContext();
+            const active = listings.filter(l => l?.status === 'active');
+            const sold = listings.filter(l => l?.status === 'sold');
+            
+            const revenue = sold.reduce((acc, curr) => acc + parsePrice(curr?.price), 0);
+            const activeValue = active.reduce((acc, curr) => acc + parsePrice(curr?.price), 0);
+            const conversionRate = listings.length ? Math.round((sold.length / listings.length) * 100) : 0;
+            const recent = [...listings].sort((a,b) => new Date(b?.date || 0) - new Date(a?.date || 0)).slice(0, 4);
+
+            return (
+                <div className="p-6 lg:p-12 max-w-[1600px] mx-auto h-full overflow-y-auto animate-fade-in no-scrollbar pb-32">
+                    <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                        <div>
+                            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Übersicht</h1>
+                            <p className="text-gray-500 mt-2 font-medium text-lg">Willkommen zurück im Cockpit, {settings?.userName || 'Rico'}.</p>
+                        </div>
+                        <Button variant="vinted" onClick={()=>setView('analyze')} icon="fa-plus" size="lg" className="animate-slide-up" style={{animationDelay: '100ms'}}>Neues Inserat</Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
+                        {[
+                            { title: 'Aktiv im Store', val: active.length, sub: `~ ${activeValue.toFixed(0)}€ Wert`, icon: 'fa-boxes-stacked', color: 'blue' },
+                            { title: 'Verkauft', val: sold.length, sub: `${conversionRate}% Conversion`, icon: 'fa-handshake', color: 'green' },
+                            { title: 'Inventar gesamt', val: listings.length, sub: 'Gelistete Artikel', icon: 'fa-box-archive', color: 'amber' },
+                            { title: 'Gesamtumsatz', val: `${revenue.toFixed(2)} €`, sub: 'Brutto Erlös', icon: 'fa-sack-dollar', color: 'vinted', dark: true }
+                        ].map((stat, i) => (
+                            <Card key={i} className={`flex flex-col justify-between group p-6 animate-slide-up ${stat.dark ? 'bg-gray-900 text-white border-gray-800' : ''}`} style={{animationDelay: `${(i+2)*100}ms`}}>
+                                <div className="flex justify-between items-start mb-6">
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-transform duration-300 group-hover:scale-110 ${stat.dark ? 'bg-gray-800 text-white border-gray-700' : `bg-${stat.color}-50 text-${stat.color}-600 border-${stat.color}-100`}`}>
+                                        <i className={`fa-solid ${stat.icon} text-2xl`}></i>
+                                    </div>
+                                </div>
+                                <div className="relative z-10">
+                                    <p className={`text-sm font-bold mb-1 ${stat.dark ? 'text-gray-400' : 'text-gray-500'}`}>{stat.title}</p>
+                                    <div className="flex items-baseline gap-2">
+                                        <h3 className={`text-3xl md:text-4xl font-black ${stat.dark ? 'text-white' : 'text-gray-900'}`}>{stat.val}</h3>
+                                        <span className={`text-xs font-semibold ${stat.dark ? 'text-gray-500' : 'text-gray-400'}`}>{stat.sub}</span>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <Card className="flex flex-col p-8 animate-slide-up" style={{animationDelay: '600ms'}}>
+                            <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
+                                <h3 className="text-xl font-extrabold text-gray-900">Letzte Aktivitäten</h3>
+                                <Button variant="ghost" onClick={()=>setView('history')} className="!p-0 text-vinted-600">Alle ansehen</Button>
+                            </div>
+                            <div className="space-y-4 flex-1">
+                                {recent.map((item, i) => {
+                                    if(!item) return null;
+                                    return (
+                                    <div key={item.id || i} className="flex items-center gap-4 bg-white/60 p-4 rounded-2xl border border-gray-100 hover:bg-white hover:shadow-sm hover:-translate-y-0.5 transition-all duration-300 animate-slide-in-right" style={{animationDelay: `${i*100}ms`}}>
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner-light ${item.status === 'sold' ? 'bg-green-100 text-green-600' : 'bg-vinted-100 text-vinted-600'}`}>
+                                            <i className={`fa-solid ${item.status === 'sold' ? 'fa-check' : 'fa-sparkles'} text-lg`}></i>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-base font-bold text-gray-900 truncate">{item.title || 'Artikel'}</p>
+                                            <p className="text-xs font-bold text-gray-500 mt-0.5">{item.status === 'sold' ? 'Verkauft' : 'Gelistet'} • {item.date ? new Date(item.date).toLocaleDateString() : ''}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-black text-gray-900 text-lg">{parsePrice(item.price).toFixed(2)} €</p>
+                                        </div>
+                                    </div>
+                                )})}
+                                {recent.length === 0 && <div className="py-12 text-center text-gray-400 font-medium">Noch keine Einträge.</div>}
+                            </div>
+                        </Card>
+
+                        <div className="space-y-8 animate-slide-up" style={{animationDelay: '700ms'}}>
+                            <Card className="p-8 bg-vinted-50/80 border-vinted-200">
+                                <h3 className="text-xl font-extrabold text-vinted-900 mb-3"><i className="fa-solid fa-graduation-cap text-vinted-600 mr-2"></i> Seller Insight</h3>
+                                <p className="text-sm text-vinted-800 leading-relaxed font-medium">Der Vinted-Algorithmus belohnt gebündelte Uploads zur Prime-Time. Bereite deine Artikel jetzt unter der Woche vor und lade alle Entwürfe am **Sonntag zwischen 19 und 21 Uhr** hoch für maximale Sichtbarkeit!</p>
+                            </Card>
+                            <Card className="p-8">
+                                <h3 className="text-xl font-extrabold text-gray-900 mb-6 border-b border-gray-100 pb-4">Quick Tools</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button onClick={()=>setView('sniper')} className="p-6 rounded-2xl bg-white hover:shadow-md border border-gray-200 text-left transition-all duration-300 hover:-translate-y-1 group">
+                                        <div className="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i className="fa-solid fa-crosshairs text-xl"></i></div>
+                                        <p className="font-bold text-gray-900 text-base">Snipe Radar</p>
+                                        <p className="text-xs text-gray-500 font-medium mt-1">Live Deals finden</p>
+                                    </button>
+                                    <button onClick={()=>setView('shipping')} className="p-6 rounded-2xl bg-white hover:shadow-md border border-gray-200 text-left transition-all duration-300 hover:-translate-y-1 group">
+                                        <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"><i className="fa-solid fa-route text-xl"></i></div>
+                                        <p className="font-bold text-gray-900 text-base">Routenplaner</p>
+                                        <p className="text-xs text-gray-500 font-medium mt-1">Smarter Versand</p>
+                                    </button>
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- ANALYZE STUDIO (Listing Generator) ---
+        const AnalyzeStudio = () => {
+            const { actions, addToast, settings } = useAppContext();
+            const [step, setStep] = useState(1);
+            const [files, setFiles] = useState([]);
+            const [loading, setLoading] = useState(false);
+            const [result, setResult] = useState(null);
+            
+            const [data, setData] = useState({ 
+                category: VINTED_DATA.categories[0], 
+                condition: VINTED_DATA.conditions[2], 
+                color: VINTED_DATA.colors[0], 
+                material: VINTED_DATA.materials[0], 
+                brand: "", 
+                style: "Detailliert",
+                pricingStrategy: "Pessimistisch",
+                deepAnalysis: false
+            });
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                if(dropped.length) setFiles(prev => [...prev, ...dropped]);
+            };
+
+            const runAnalysis = async () => {
+                setLoading(true); setStep(3);
+                try {
+                    const b64s = [];
+                    for(let f of files) b64s.push(await fileToBase64(f));
+
+                    const styleInstruction = data.style === 'Detailliert'
+                        ? `Schreibe locker, professionell und seeehr ausführlich. Starte zwingend mit "Moin! 👋". Beschreibe Zustand, Material, Farbe und Passform in schönen Sätzen. Beende mit der Signatur: "${settings?.signature || 'LG'}" und einem kurzen rechtlichen Hinweis (Da Privatverkauf: Keine Garantie/Rücknahme).`
+                        : `Schreibe extrem kurz, präzise und minimalistisch im Stichpunkt-Stil für schnelle Lesbarkeit. Nur harte Fakten. Keine Begrüßung, kein Fließtext.`;
+
+                    const priceInstruction = data.pricingStrategy === 'Pessimistisch'
+                        ? `Rechne sehr pessimistisch und defensiv, um einen extrem schnellen Verkauf (Quick Flip) zu garantieren. Setze den vorgeschlagenen Preis an die untere Grenze des Marktwertes.`
+                        : `Rechne optimistisch auf maximalen Profit. Setze den Preis höher an, um Verhandlungsspielraum zu haben, aber bleib realistisch.`;
+
+                    const deepJson = data.deepAnalysis 
+                        ? `"detailed_price_breakdown": { "lowest": 15, "highest": 40, "avg_time": "1-2 Wochen", "factors": ["Beliebte Marke", "Farbe"], "deep_analysis": "Sehr ausführliche Marktanalyse zur aktuellen Lage dieses Modells...", "target_audience": "Wer kauft das?", "competition": "Hoch/Mittel/Niedrig" }`
+                        : `"detailed_price_breakdown": null`;
+
+                    const prompt = `Du bist ein Vinted SEO- und Sales-Experte. Analysiere das Angebot.
+                    Kategorie: ${data.category}, Zustand: ${data.condition}, Marke: ${data.brand||'-'}, Farbe: ${data.color}, Material: ${data.material}.
+                    Copywriting-Stil: ${styleInstruction}
+                    Pricing-Strategie: ${priceInstruction}
+
+                    GIB AUSSCHLIESSLICH DIESES JSON ZURÜCK (Nichts anderes): 
+                    {
+                        "title": "Titel max 60 Zeichen, suchoptimiert", 
+                        "description": "Text exakt nach Stil-Vorgabe", 
+                        "suggested_price": 25, 
+                        "price_rationale": "Kurze Begründung", 
+                        ${deepJson},
+                        "image_score": "8/10", 
+                        "image_tips": "Kritische Tipps zu den hochgeladenen Fotos", 
+                        "selling_tips": "Tipp für diese Kategorie", 
+                        "hashtags": "#tags #getrennt"
+                    }`;
+
+                    const parsed = await callGemini(prompt, b64s, settings?.apiModel);
+                    setResult(parsed);
+                    
+                    actions.addListing({
+                        id: Date.now().toString(), title: parsed.title, description: parsed.description,
+                        price: parsePrice(parsed.suggested_price), buy_price: 0, status: 'active', shipping_status: 'pack',
+                        date: new Date().toISOString(), category: data.category, condition: data.condition, brand: data.brand
+                    });
+                    addToast("Gespeichert!", "success");
+                    setStep(4);
+                } catch (e) {
+                    addToast(e.message, "error");
+                    setStep(2);
+                } finally { setLoading(false); }
+            };
+
+            return (
+                <div className="p-6 lg:p-12 max-w-5xl mx-auto h-full overflow-y-auto animate-fade-in no-scrollbar pb-32">
+                    <div className="text-center mb-10 animate-slide-in-right">
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">AI Listing Studio</h1>
+                        <p className="text-gray-500 mt-2 font-medium text-lg">In 4 Schritten zum perfekten Vinted-Inserat.</p>
+                    </div>
+
+                    <div className="max-w-2xl mx-auto mb-12 animate-slide-up" style={{animationDelay: '100ms'}}>
+                        <div className="flex items-center justify-between relative">
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1.5 bg-gray-200 rounded-full z-0"></div>
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-vinted-500 rounded-full z-0 transition-all duration-700 ease-in-out" style={{width: `${((step-1)/3)*100}%`}}></div>
+                            {[1, 2, 3, 4].map(num => (
+                                <div key={num} className={`w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold text-base z-10 transition-all duration-500 bg-white ${step >= num ? 'border-vinted-500 text-vinted-600 shadow-md scale-110' : 'border-gray-200 text-gray-400'}`}>
+                                    {step > num ? <i className="fa-solid fa-check"></i> : num}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="max-w-3xl mx-auto">
+                        {step === 1 && (
+                            <Card className="p-8 md:p-14 text-center animate-slide-in-right">
+                                <div className="w-24 h-24 bg-white border border-gray-100 shadow-sm rounded-full flex items-center justify-center text-vinted-600 text-4xl mx-auto mb-6"><i className="fa-solid fa-camera"></i></div>
+                                <h2 className="text-3xl font-extrabold mb-3">Artikelfotos</h2>
+                                <p className="text-gray-500 font-medium mb-10">Lade alle Perspektiven deines Artikels hoch für die beste SEO-Analyse.</p>
+                                
+                                <div onDragOver={e=>e.preventDefault()} onDrop={handleDrop} className="border-2 border-dashed border-gray-300 rounded-3xl bg-white hover:bg-gray-50 hover:border-vinted-400 transition-all p-12 cursor-pointer relative group shadow-inner-light">
+                                    <input type="file" multiple accept="image/*" onChange={(e) => setFiles(prev => [...prev, ...Array.from(e.target.files)])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                    <i className="fa-solid fa-cloud-arrow-up text-5xl text-gray-300 group-hover:text-vinted-500 mb-4 transition-colors group-hover:-translate-y-2 duration-300"></i>
+                                    <h3 className="font-bold text-gray-900 text-lg">Dateien auswählen oder ablegen</h3>
+                                </div>
+
+                                {files.length > 0 && (
+                                    <div className="mt-8 grid grid-cols-4 md:grid-cols-5 gap-4">
+                                        {files.map((f, i) => (
+                                            <div key={i} className="aspect-square rounded-2xl overflow-hidden shadow-sm relative group border border-gray-200 hover:-translate-y-1 transition-transform">
+                                                <img src={URL.createObjectURL(f)} className="w-full h-full object-cover" />
+                                                <button onClick={()=>setFiles(files.filter((_, idx)=>idx!==i))} className="absolute top-1.5 right-1.5 bg-white/90 backdrop-blur-sm rounded-lg p-1.5 text-red-500 opacity-0 group-hover:opacity-100 shadow-sm transition-all hover:bg-red-500 hover:text-white"><i className="fa-solid fa-xmark text-xs"></i></button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                <div className="mt-10 flex justify-end"><Button onClick={()=>setStep(2)} disabled={files.length===0} size="lg" icon="fa-arrow-right">Weiter zu Setup</Button></div>
+                            </Card>
+                        )}
+
+                        {step === 2 && (
+                            <Card className="p-8 md:p-12 animate-slide-in-right">
+                                <h2 className="text-2xl font-extrabold mb-8 flex items-center gap-3 border-b border-gray-100 pb-4"><i className="fa-solid fa-sliders text-vinted-500"></i> Metadaten & KI-Setup</h2>
+                                
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 mb-8">
+                                    <Select label="Kategorie" value={data.category} onChange={e=>setData({...data, category: e.target.value})} options={VINTED_DATA.categories} icon="fa-layer-group" />
+                                    <Select label="Zustand" value={data.condition} onChange={e=>setData({...data, condition: e.target.value})} options={VINTED_DATA.conditions} icon="fa-star" />
+                                    <Select label="Farbe" value={data.color} onChange={e=>setData({...data, color: e.target.value})} options={VINTED_DATA.colors} icon="fa-palette" />
+                                    <Select label="Material" value={data.material} onChange={e=>setData({...data, material: e.target.value})} options={VINTED_DATA.materials} icon="fa-scissors" />
+                                    <Input className="sm:col-span-2" label="Marke" value={data.brand} onChange={e=>setData({...data, brand: e.target.value})} icon="fa-copyright" placeholder="Optional, aber extrem wichtig" />
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1 mb-3 block">Beschreibungstext (Copywriting)</label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div onClick={()=>setData({...data, style: 'Detailliert'})} className={`cursor-pointer p-4 rounded-2xl border-2 transition-all ${data.style === 'Detailliert' ? 'border-vinted-500 bg-white shadow-sm ring-4 ring-vinted-500/10' : 'border-gray-200 bg-gray-50/50 hover:border-gray-300'}`}>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <h4 className="font-bold text-gray-900">Ausführlich</h4>
+                                                {data.style === 'Detailliert' && <i className="fa-solid fa-circle-check text-vinted-500"></i>}
+                                            </div>
+                                            <p className="text-xs text-gray-500 font-medium">Moin!, Details, Fließtext & Signatur.</p>
+                                        </div>
+                                        <div onClick={()=>setData({...data, style: 'Kurz'})} className={`cursor-pointer p-4 rounded-2xl border-2 transition-all ${data.style === 'Kurz' ? 'border-vinted-500 bg-white shadow-sm ring-4 ring-vinted-500/10' : 'border-gray-200 bg-gray-50/50 hover:border-gray-300'}`}>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <h4 className="font-bold text-gray-900">Kurz & Knapp</h4>
+                                                {data.style === 'Kurz' && <i className="fa-solid fa-circle-check text-vinted-500"></i>}
+                                            </div>
+                                            <p className="text-xs text-gray-500 font-medium">Stichpunkte, harte Fakten, schnell lesbar.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mb-8">
+                                    <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1 mb-3 block">Pricing-Strategie</label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div onClick={()=>setData({...data, pricingStrategy: 'Pessimistisch'})} className={`cursor-pointer p-4 rounded-2xl border-2 transition-all ${data.pricingStrategy === 'Pessimistisch' ? 'border-blue-500 bg-white shadow-sm ring-4 ring-blue-500/10' : 'border-gray-200 bg-gray-50/50 hover:border-gray-300'}`}>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <h4 className="font-bold text-gray-900">Pessimistisch</h4>
+                                                {data.pricingStrategy === 'Pessimistisch' && <i className="fa-solid fa-circle-check text-blue-500"></i>}
+                                            </div>
+                                            <p className="text-xs text-gray-500 font-medium">Untergrenze, für extrem schnellen "Quick Flip".</p>
+                                        </div>
+                                        <div onClick={()=>setData({...data, pricingStrategy: 'Optimistisch'})} className={`cursor-pointer p-4 rounded-2xl border-2 transition-all ${data.pricingStrategy === 'Optimistisch' ? 'border-blue-500 bg-white shadow-sm ring-4 ring-blue-500/10' : 'border-gray-200 bg-gray-50/50 hover:border-gray-300'}`}>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <h4 className="font-bold text-gray-900">Optimistisch</h4>
+                                                {data.pricingStrategy === 'Optimistisch' && <i className="fa-solid fa-circle-check text-blue-500"></i>}
+                                            </div>
+                                            <p className="text-xs text-gray-500 font-medium">Obergrenze für maximalen Profit & Verhandlung.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mb-10 p-5 bg-gray-900 rounded-2xl flex justify-between items-center cursor-pointer shadow-floating hover:-translate-y-1 transition-transform border border-gray-800" onClick={()=>setData({...data, deepAnalysis: !data.deepAnalysis})}>
+                                    <div>
+                                        <h4 className="font-bold text-white flex items-center gap-2"><i className="fa-solid fa-chart-pie text-vinted-400"></i> Deep Market Research <Badge color="vinted" className="ml-2 !py-0.5 !text-[10px]">PRO</Badge></h4>
+                                        <p className="text-xs text-gray-400 mt-1.5 font-medium">KI berechnet Marktspanne, Verkaufsdauer & Werttreiber.</p>
+                                    </div>
+                                    <div className={`w-12 h-6 rounded-full relative transition-colors ${data.deepAnalysis ? 'bg-vinted-500' : 'bg-gray-700'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${data.deepAnalysis ? 'left-7' : 'left-1'}`}></div>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-between border-t border-gray-100 pt-8">
+                                    <Button variant="secondary" onClick={()=>setStep(1)} size="lg" icon="fa-arrow-left">Zurück</Button>
+                                    <Button onClick={runAnalysis} variant="primary" icon="fa-wand-magic-sparkles" size="lg">KI Analyse starten</Button>
+                                </div>
+                            </Card>
+                        )}
+
+                        {step === 3 && (
+                            <div className="py-32 text-center animate-fade-in flex flex-col items-center">
+                                <div className="relative w-32 h-32 mb-8">
+                                    <div className="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
+                                    <div className="absolute inset-0 border-4 border-vinted-500 rounded-full border-t-transparent animate-spin" style={{animationDuration: '2s'}}></div>
+                                    <div className="absolute inset-2 border-4 border-vinted-300 rounded-full border-b-transparent animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+                                    <div className="absolute inset-0 flex items-center justify-center text-vinted-600 text-4xl"><i className="fa-solid fa-microchip animate-pulse-fast"></i></div>
+                                </div>
+                                <h2 className="text-3xl font-extrabold text-gray-900 mb-3">KI berechnet Listing</h2>
+                                <div className="h-6 overflow-hidden">
+                                    <p className="text-gray-500 font-medium text-lg animate-[slideUp_2s_infinite]">Scanne Bildpunkte und aggregiere Marktdaten...</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 4 && result && (
+                            <div className="space-y-6 animate-slide-in-right">
+                                <Card noPadding>
+                                    <div className="px-8 py-5 bg-white border-b border-gray-100 flex justify-between items-center">
+                                        <div className="font-bold text-[11px] uppercase tracking-widest text-gray-500"><i className="fa-solid fa-heading text-vinted-500 mr-2"></i> SEO Titel</div>
+                                        <Button variant="ghost" size="sm" onClick={()=>{navigator.clipboard.writeText(result.title); addToast('Kopiert');}} icon="fa-copy">Kopieren</Button>
+                                    </div>
+                                    <div className="p-8 bg-gray-50/50"><p className="text-2xl font-black text-gray-900 leading-tight">{result.title}</p></div>
+                                </Card>
+
+                                <Card noPadding>
+                                    <div className="px-8 py-5 bg-white border-b border-gray-100 flex justify-between items-center">
+                                        <div className="font-bold text-[11px] uppercase tracking-widest text-gray-500"><i className="fa-solid fa-align-left text-vinted-500 mr-2"></i> Verkaufstext</div>
+                                        <Button variant="ghost" size="sm" onClick={()=>{navigator.clipboard.writeText(result.description); addToast('Kopiert');}} icon="fa-copy">Kopieren</Button>
+                                    </div>
+                                    <div className="p-8 bg-gray-50/50">
+                                        <p className="whitespace-pre-wrap text-base text-gray-800 font-medium leading-relaxed">{result.description}</p>
+                                        <div className="mt-8 pt-6 border-t border-gray-200 flex flex-wrap gap-2">
+                                            {Array.isArray(result.hashtags) ? result.hashtags.map(t => <span key={t} className="bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">{t}</span>) : (result.hashtags || '').split(' ').map(t => t && <span key={t} className="bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">{t}</span>)}
+                                        </div>
+                                    </div>
+                                </Card>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {result.detailed_price_breakdown ? (
+                                        <Card className="p-8 bg-gray-900 text-white relative overflow-hidden md:col-span-2 shadow-floating">
+                                            <i className="fa-solid fa-chart-pie absolute -right-10 -bottom-10 text-9xl text-white/5 transform -rotate-12"></i>
+                                            <div className="relative z-10">
+                                                <div className="flex justify-between items-start mb-6">
+                                                    <p className="text-[11px] font-bold text-vinted-400 uppercase tracking-widest flex items-center gap-2"><i className="fa-solid fa-bolt"></i> Market Deep Dive</p>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-4 mb-8 items-end">
+                                                    <div>
+                                                        <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Low</p>
+                                                        <p className="text-2xl font-bold text-gray-300">{parsePrice(result.detailed_price_breakdown.lowest).toFixed(2)} €</p>
+                                                    </div>
+                                                    <div className="border-x border-gray-700 px-4 text-center">
+                                                        <p className="text-[10px] text-vinted-400 font-bold uppercase mb-1">Empfohlen ({data.pricingStrategy})</p>
+                                                        <p className="text-5xl font-black text-vinted-400">{parsePrice(result.suggested_price).toFixed(2)} €</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">High</p>
+                                                        <p className="text-2xl font-bold text-gray-300">{parsePrice(result.detailed_price_breakdown.highest).toFixed(2)} €</p>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-gray-800/80 p-5 rounded-2xl mb-6 border border-gray-700 shadow-inner-light">
+                                                    <p className="text-sm font-medium text-gray-300 leading-relaxed mb-3"><strong className="text-white">Analyse:</strong> {result.detailed_price_breakdown.deep_analysis}</p>
+                                                    <div className="flex gap-4 border-t border-gray-700 pt-3 mt-3">
+                                                        <p className="text-xs text-gray-400"><strong className="text-gray-300">Zielgruppe:</strong> {result.target_audience || 'Allgemein'}</p>
+                                                        <p className="text-xs text-gray-400"><strong className="text-gray-300">Konkurrenz:</strong> {result.competition || 'Mittel'}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <Badge color="vinted" className="bg-vinted-500/20 text-vinted-300 border-vinted-500/30">⏳ Dauer: {result.detailed_price_breakdown.avg_time}</Badge>
+                                                    {Array.isArray(result.detailed_price_breakdown.factors) && result.detailed_price_breakdown.factors.map(f => <Badge key={f} color="gray" className="bg-gray-800 text-gray-300 border-gray-700">{f}</Badge>)}
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    ) : (
+                                        <Card className="p-8 bg-gray-900 text-white relative overflow-hidden">
+                                            <i className="fa-solid fa-tag absolute -right-4 -bottom-4 text-8xl text-gray-800 transform -rotate-12"></i>
+                                            <div className="relative z-10">
+                                                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Marktwert ({data.pricingStrategy})</p>
+                                                <h3 className="text-5xl font-black mb-6 text-vinted-400">{parsePrice(result.suggested_price).toFixed(2)} €</h3>
+                                                <p className="text-sm text-gray-300 font-medium leading-relaxed">{result.price_rationale}</p>
+                                            </div>
+                                        </Card>
+                                    )}
+                                    
+                                    <div className={`space-y-6 ${result.detailed_price_breakdown ? 'md:col-span-2' : ''}`}>
+                                        <Card className="p-8 h-full flex flex-col justify-between">
+                                            <div className={result.detailed_price_breakdown ? 'grid grid-cols-1 md:grid-cols-2 gap-8' : ''}>
+                                                <div>
+                                                    <div className="flex justify-between items-start mb-6">
+                                                        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest"><i className="fa-solid fa-camera text-vinted-500 mr-2"></i> Foto-Score</p>
+                                                        <Badge color={parseInt(result.image_score) > 7 ? 'green' : 'amber'} className="shadow-sm text-sm py-1.5 px-3">{result.image_score}</Badge>
+                                                    </div>
+                                                    <p className="text-sm text-gray-700 font-medium leading-relaxed bg-gray-50 p-5 rounded-xl border border-gray-100">{result.image_tips}</p>
+                                                </div>
+                                                <div>
+                                                    <p className={result.detailed_price_breakdown ? "text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-6" : "text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-6 mb-4"}><i className="fa-solid fa-lightbulb text-amber-500 mr-2"></i> Sales Tipp ({data.category})</p>
+                                                    <p className="text-sm text-amber-900 font-medium leading-relaxed bg-amber-50 p-5 rounded-xl border border-amber-100">{result.selling_tips}</p>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    </div>
+                                </div>
+                                <div className="pt-8 text-center"><Button variant="secondary" onClick={()=>{setStep(1); setFiles([]); setResult(null);}} icon="fa-rotate-right" size="lg" className="mx-auto shadow-md hover:-translate-y-1">Neues Listing generieren</Button></div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- INVENTORY ---
+        const Inventory = ({ setView }) => {
+            const { listings, actions, addToast } = useAppContext();
+            const [search, setSearch] = useState('');
+            const [filter, setFilter] = useState('all');
+            const [showManualModal, setShowManualModal] = useState(false);
+            
+            const [manualData, setManualData] = useState({ title: '', price: '', category: VINTED_DATA.categories[8], condition: VINTED_DATA.conditions[2] });
+
+            const filtered = listings.filter(l => {
+                if (!l) return false; 
+                const titleStr = typeof l.title === 'string' ? l.title.toLowerCase() : '';
+                const searchStr = typeof search === 'string' ? search.toLowerCase() : '';
+                const matchS = titleStr.includes(searchStr);
+                const matchF = filter === 'all' || l.status === filter;
+                return matchS && matchF;
+            });
+
+            const handleManualAdd = () => {
+                actions.addListing({
+                    id: Date.now().toString(), title: manualData.title || 'Neuer Artikel',
+                    price: parsePrice(manualData.price), category: manualData.category, condition: manualData.condition,
+                    status: 'active', shipping_status: 'pack', date: new Date().toISOString(), buy_price: 0, score: '-', brand: '-'
+                });
+                setShowManualModal(false);
+                setManualData({title: '', price: '', category: VINTED_DATA.categories[8], condition: VINTED_DATA.conditions[2]});
+                addToast("Artikel manuell hinzugefügt", "success");
+            };
+
+            return (
+                <div className="p-6 lg:p-12 max-w-7xl mx-auto h-full overflow-y-auto animate-fade-in no-scrollbar pb-32 relative">
+                    <div className="mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4 animate-slide-in-right">
+                        <div>
+                            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Inventar</h1>
+                            <p className="text-gray-500 mt-2 font-medium text-lg">Verwalte {listings.length} Artikel zentral an einem Ort.</p>
+                        </div>
+                    </div>
+
+                    <Card className="flex flex-col h-[calc(100vh-250px)] min-h-[500px] p-0 animate-slide-up" style={{animationDelay: '100ms'}}>
+                        <div className="p-6 border-b border-gray-100 bg-white flex flex-col sm:flex-row gap-4">
+                            <div className="flex-1 relative">
+                                <i className="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" placeholder="Artikel suchen..." value={search} onChange={e=>setSearch(e.target.value)} className="w-full pl-12 pr-4 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm font-semibold focus:bg-white focus:border-vinted-500 outline-none shadow-inner-light transition-all" />
+                            </div>
+                            <div className="flex gap-3 shrink-0">
+                                <div className="w-full sm:w-48 relative">
+                                    <select value={filter} onChange={e=>setFilter(e.target.value)} className="w-full px-5 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 focus:bg-white focus:border-vinted-500 outline-none appearance-none cursor-pointer shadow-inner-light transition-all">
+                                        <option value="all">Alle Status</option><option value="active">Nur Aktive</option><option value="sold">Nur Verkaufte</option><option value="paused">Pausierte</option>
+                                    </select>
+                                    <i className="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none"></i>
+                                </div>
+                                <Button variant="primary" onClick={()=>setShowManualModal(true)} icon="fa-plus" title="Manuell ohne KI hinzufügen"></Button>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-0 no-scrollbar relative bg-gray-50/30">
+                            {filtered.length > 0 ? (
+                                <table className="w-full text-left border-collapse">
+                                    <thead className="bg-white sticky top-0 z-10 shadow-xs border-b border-gray-100">
+                                        <tr>
+                                            <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Artikel</th>
+                                            <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest w-32">Preis</th>
+                                            <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest w-48">Status</th>
+                                            <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest w-24 text-right">Aktion</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {filtered.map((item, i) => {
+                                            if(!item) return null;
+                                            return (
+                                            <tr key={item.id || i} className="hover:bg-white transition-colors group animate-slide-in-right" style={{animationDelay: `${i*50}ms`}}>
+                                                <td className="px-8 py-5">
+                                                    <div className="flex items-center gap-5">
+                                                        <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center border border-gray-200 shrink-0 text-gray-300 shadow-sm group-hover:scale-105 transition-transform"><i className="fa-regular fa-image text-xl"></i></div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-base font-bold text-gray-900 truncate mb-1">{item.title}</p>
+                                                            <div className="flex gap-2">
+                                                                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200">{item.category || 'N/A'}</span>
+                                                                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200">{item.condition || 'N/A'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-5 whitespace-nowrap"><span className="text-base font-black text-gray-900">{parsePrice(item.price).toFixed(2)} €</span></td>
+                                                <td className="px-8 py-5 whitespace-nowrap">
+                                                    <div className="relative w-40">
+                                                        <select value={item.status} onChange={e => {actions.updateListing(item.id, {status: e.target.value}); addToast("Status aktualisiert");}} className={`appearance-none w-full py-2.5 pl-4 pr-8 rounded-xl text-xs font-bold outline-none cursor-pointer border transition-colors shadow-sm ${item.status === 'sold' ? 'bg-green-50 border-green-200 text-green-700 focus:border-green-500' : item.status === 'paused' ? 'bg-gray-100 border-gray-300 text-gray-700' : 'bg-white border-gray-300 text-gray-700 focus:border-vinted-500'}`}>
+                                                            <option value="active">Aktiv</option><option value="paused">Pausiert</option><option value="sold">Verkauft</option>
+                                                        </select>
+                                                        <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[10px] pointer-events-none opacity-50"></i>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-5 whitespace-nowrap text-right">
+                                                    <button onClick={()=>{if(confirm('Wirklich löschen?')) actions.deleteListing(item.id);}} className="w-10 h-10 rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-500 border border-transparent hover:border-red-100 transition-colors inline-flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 shadow-sm">
+                                                        <i className="fa-solid fa-trash text-sm"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )})}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="absolute inset-0 flex items-center justify-center p-8">
+                                    <EmptyState icon="fa-box-open" title="Keine Artikel gefunden" description="Passe deine Suche an oder füge neue Inserate über das Analyse-Studio hinzu." action={<Button onClick={()=>setView('analyze')} icon="fa-plus">Neues Inserat</Button>} />
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-5 border-t border-gray-100 bg-white text-[11px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center">
+                            <span>Zeige {filtered.length} Einträge</span>
+                        </div>
+                    </Card>
+
+                    {showManualModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fade-in">
+                            <Card className="w-full max-w-lg shadow-floating p-8 relative border-none">
+                                <button onClick={()=>setShowManualModal(false)} className="absolute top-6 right-6 w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center transition-colors"><i className="fa-solid fa-xmark"></i></button>
+                                <h2 className="text-2xl font-extrabold text-gray-900 mb-6">Manuell Hinzufügen</h2>
+                                <div className="space-y-4 mb-8">
+                                    <Input label="Titel" value={manualData.title} onChange={e=>setManualData({...manualData, title: e.target.value})} placeholder="z.B. Carhartt Hose Schwarz" />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Input label="Preis (€)" type="number" value={manualData.price} onChange={e=>setManualData({...manualData, price: e.target.value})} placeholder="25" />
+                                        <Select label="Zustand" value={manualData.condition} onChange={e=>setManualData({...manualData, condition: e.target.value})} options={VINTED_DATA.conditions} />
+                                    </div>
+                                    <Select label="Kategorie" value={manualData.category} onChange={e=>setManualData({...manualData, category: e.target.value})} options={VINTED_DATA.categories} />
+                                </div>
+                                <Button onClick={handleManualAdd} className="w-full shadow-lg" size="lg" icon="fa-check">Speichern (Ohne KI)</Button>
+                            </Card>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- DEAL CHECKER PRO ---
+        const DealChecker = () => {
+            const { addToast, settings } = useAppContext();
+            const [links, setLinks] = useState("");
+            const [files, setFiles] = useState([]);
+            const [purchasePrice, setPurchasePrice] = useState("");
+            const [isFree, setIsFree] = useState(false);
+            const [margin, setMargin] = useState(40);
+            const [loading, setLoading] = useState(false);
+            const [result, setResult] = useState(null);
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                const dropped = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                if(dropped.length) setFiles(prev => [...prev, ...dropped]);
+            };
+
+            const handleCheck = async () => {
+                if(!links.trim() && files.length === 0) return addToast("Bitte Text, Link oder Bilder einfügen.", "warning");
+                setLoading(true); setResult(null);
+                
+                try {
+                    const b64s = [];
+                    for(let f of files) b64s.push(await fileToBase64(f));
+
+                    const priceInfo = isFree ? `Zu verschenken (0 €)` : (purchasePrice ? `${purchasePrice} €` : `Nicht angegeben`);
+
+                    const prompt = `Analysiere diesen Deal für Reselling: ${links || 'Siehe angehängte Bilder'}.
+                    Geforderter Preis: ${priceInfo}. Ziel-Netto-Marge: ${margin}%. Berücksichtige Fahrt/Verpackung (ca 3€).
+                    GIB AUSSCHLIESSLICH DIESES JSON ZURÜCK:
+                    {
+                        "item_name": "Genaue Bezeichnung",
+                        "demand_level": "Hoch / Mittel / Niedrig",
+                        "estimated_sell_price": 50,
+                        "calculated_profit": 15.50,
+                        "max_buy_price": 25.00,
+                        "roi_percent": 30,
+                        "risk_assessment": "Hoch / Mittel / Niedrig",
+                        "worth_it": true,
+                        "deep_analysis": "Warum lohnt sich das? Marktlage?",
+                        "action_steps": ["Schritt 1", "Schritt 2"],
+                        "red_flags": ["Worauf achten?"],
+                        "negotiation_msg": "Fertiger Text, um den Verkäufer anzuschreiben."
+                    }`;
+                    
+                    const res = await callGemini(prompt, b64s, settings?.apiModel);
+                    setResult(res);
+                } catch(e) { addToast(e.message, "error"); } finally { setLoading(false); }
+            };
+
+            return (
+                <div className="p-6 lg:p-12 max-w-[1600px] mx-auto h-full overflow-y-auto animate-fade-in pb-32">
+                    <div className="mb-10 animate-slide-in-right">
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Deal Checker Pro</h1>
+                        <p className="text-gray-500 mt-2 font-medium text-lg">Überprüfe Angebote und berechne deinen garantierten Profit.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        <div className="space-y-8 animate-slide-up" style={{animationDelay: '100ms'}}>
+                            <Card className="p-8">
+                                <h2 className="text-xl font-extrabold text-gray-900 mb-6 border-b border-gray-100 pb-4 flex items-center gap-3"><div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i className="fa-solid fa-file-invoice"></i></div> 1. Deal Details</h2>
+                                <Input multiline rows={3} placeholder="Link oder Textbeschreibung der Anzeige einfügen..." value={links} onChange={e=>setLinks(e.target.value)} icon="fa-link" />
+                                
+                                <div className="mt-6">
+                                    <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1 mb-2 block">Screenshots (Sehr Wichtig!)</label>
+                                    <div onDragOver={e=>e.preventDefault()} onDrop={handleDrop} className="border-2 border-dashed border-gray-300 rounded-3xl bg-white hover:bg-gray-50 transition-colors p-8 text-center cursor-pointer relative shadow-inner-light">
+                                        <input type="file" multiple accept="image/*" onChange={(e) => setFiles(prev => [...prev, ...Array.from(e.target.files)])} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                        <i className="fa-solid fa-camera-retro text-3xl text-gray-400 mb-3"></i>
+                                        <p className="text-sm text-gray-600 font-bold">Bilder vom Deal ablegen</p>
+                                    </div>
+                                    {files.length > 0 && (
+                                        <div className="mt-4 flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                                            {files.map((f, i) => (
+                                                <div key={i} className="w-16 h-16 rounded-xl overflow-hidden shrink-0 relative border border-gray-200 shadow-sm">
+                                                    <img src={URL.createObjectURL(f)} className="w-full h-full object-cover" />
+                                                    <button onClick={()=>setFiles(files.filter((_, idx)=>idx!==i))} className="absolute top-1 right-1 bg-white/90 backdrop-blur-sm rounded p-1 shadow-sm text-red-500 hover:bg-red-500 hover:text-white transition-colors"><i className="fa-solid fa-xmark text-[10px]"></i></button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </Card>
+
+                            <Card className="p-8">
+                                <h2 className="text-xl font-extrabold text-gray-900 mb-6 border-b border-gray-100 pb-4 flex items-center gap-3"><div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center"><i className="fa-solid fa-calculator"></i></div> 2. Kalkulation</h2>
+                                <div className="flex items-center gap-3 mb-6 p-4 bg-vinted-50/50 rounded-2xl border border-vinted-100 cursor-pointer hover:bg-vinted-50 transition-colors shadow-inner-light" onClick={()=>setIsFree(!isFree)}>
+                                    <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${isFree ? 'bg-vinted-600 border-vinted-600 text-white' : 'border-gray-300 bg-white'}`}>
+                                        {isFree && <i className="fa-solid fa-check text-xs"></i>}
+                                    </div>
+                                    <span className="text-base font-bold text-vinted-900">Artikel ist Zu verschenken (0 €)</span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8">
+                                    <Input label="Geforderter Preis (€)" type="number" placeholder="z.B. 15" value={purchasePrice} onChange={e=>setPurchasePrice(e.target.value)} disabled={isFree} icon="fa-money-bill-wave" />
+                                    <div>
+                                        <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1 mb-2 block">Ziel-Marge (Netto)</label>
+                                        <div className="bg-white border border-gray-200 rounded-2xl p-3.5 flex items-center justify-between shadow-inner-light">
+                                            <input type="range" min="10" max="100" step="5" value={margin} onChange={e=>setMargin(Number(e.target.value))} className="w-2/3" />
+                                            <span className="font-bold text-vinted-600 text-base">{margin}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <Button onClick={handleCheck} loading={loading} variant="primary" className="w-full" size="lg" icon="fa-magnifying-glass-chart">Deal analysieren</Button>
+                            </Card>
+                        </div>
+
+                        <div className="min-h-[600px] animate-slide-up" style={{animationDelay: '200ms'}}>
+                            {loading && (
+                                <Card className="h-full p-12 flex flex-col items-center justify-center text-center">
+                                    <div className="w-24 h-24 bg-gray-50 rounded-full border border-gray-100 shadow-inner-light flex items-center justify-center mb-8 relative">
+                                        <div className="absolute inset-0 border-4 border-vinted-500 rounded-full border-t-transparent animate-spin"></div>
+                                        <i className="fa-solid fa-brain text-4xl text-vinted-600 animate-pulse-fast"></i>
+                                    </div>
+                                    <p className="font-extrabold text-gray-900 mb-3 text-2xl">Analysiere Angebotsebene...</p>
+                                    <p className="text-sm text-gray-500 font-medium text-lg max-w-sm mx-auto leading-relaxed">Die KI prüft Marktnachfrage, vergleicht Preise und checkt das Risiko für diesen Artikel.</p>
+                                </Card>
+                            )}
+                            
+                            {result && !loading && (
+                                <Card className={`h-full flex flex-col relative overflow-hidden border-t-8 shadow-floating animate-slide-in-right ${result.worth_it ? 'border-t-green-500' : 'border-t-red-500'}`}>
+                                    <div className="p-8 md:p-10 flex-1 overflow-y-auto no-scrollbar">
+                                        <div className="flex flex-col sm:flex-row justify-between items-start gap-6 mb-8">
+                                            <div>
+                                                <h2 className={`text-4xl md:text-5xl font-black mb-3 tracking-tight ${result.worth_it ? 'text-green-600' : 'text-red-600'}`}>{result.worth_it ? 'Zuschlagen! 👍' : 'Finger weg! 🛑'}</h2>
+                                                <p className="text-gray-900 font-bold text-lg bg-gray-100 inline-block px-4 py-1.5 rounded-lg border border-gray-200">{result.item_name}</p>
+                                            </div>
+                                            <div className="flex flex-col gap-3 shrink-0 text-right">
+                                                <Badge color={result.risk_assessment==='Hoch'?'red':result.risk_assessment==='Mittel'?'amber':'green'} className="justify-center py-2 px-4 shadow-sm text-sm">Risiko: {result.risk_assessment}</Badge>
+                                                <Badge color={result.demand_level==='Hoch'?'green':result.demand_level==='Mittel'?'blue':'gray'} className="justify-center py-2 px-4 shadow-sm text-sm">Nachfrage: {result.demand_level}</Badge>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+                                            <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 shadow-inner-light">
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Est. Vinted Wert</p>
+                                                <p className="text-3xl font-black text-gray-900">{parsePrice(result.estimated_sell_price).toFixed(2)} €</p>
+                                            </div>
+                                            <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 shadow-inner-light">
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Max. Ankauf</p>
+                                                <p className="text-3xl font-black text-gray-900">{result.max_buy_price} {result.max_buy_price !== '0' && result.max_buy_price !== 'Kostenlos!' && '€'}</p>
+                                            </div>
+                                            <div className={`${result.worth_it ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'} p-5 rounded-2xl border col-span-2 md:col-span-1 shadow-sm`}>
+                                                <p className="text-[10px] font-bold uppercase tracking-widest mb-2">Netto-Gewinn</p>
+                                                <div className="flex items-center gap-3">
+                                                    <p className="text-3xl font-black">{parsePrice(result.calculated_profit).toFixed(2)} €</p>
+                                                    <span className={`text-xs font-bold px-2 py-1 rounded bg-white shadow-sm ${result.worth_it ? 'text-green-600' : 'text-red-600'}`}>ROI: {result.roi_percent}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-8">
+                                            <div>
+                                                <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2"><i className="fa-solid fa-chart-line text-vinted-500"></i> Marktanalyse</h3>
+                                                <p className="text-base text-gray-700 font-medium leading-relaxed bg-gray-50/80 p-5 rounded-2xl border border-gray-200 shadow-inner-light">{result.deep_analysis}</p>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="bg-blue-50/80 p-6 rounded-2xl border border-blue-200 shadow-sm">
+                                                    <h3 className="text-xs font-bold text-blue-800 uppercase tracking-widest mb-4 flex items-center gap-2"><i className="fa-solid fa-list-check"></i> Action Plan</h3>
+                                                    <ul className="space-y-3">
+                                                        {Array.isArray(result.action_steps) ? result.action_steps.map((s,i) => <li key={i} className="text-sm text-blue-900 font-medium flex gap-3"><span className="w-6 h-6 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-bold shrink-0">{i+1}</span> {s}</li>) : <li className="text-sm text-blue-900">{result.action_steps}</li>}
+                                                    </ul>
+                                                </div>
+                                                <div className="bg-red-50/80 p-6 rounded-2xl border border-red-200 shadow-sm">
+                                                    <h3 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-4 flex items-center gap-2"><i className="fa-solid fa-flag"></i> Red Flags</h3>
+                                                    <ul className="space-y-3">
+                                                        {Array.isArray(result.red_flags) ? result.red_flags.map((f,i) => <li key={i} className="text-sm text-red-900 font-medium flex gap-3"><i className="fa-solid fa-triangle-exclamation mt-1 text-red-500"></i> {f}</li>) : <li className="text-sm text-red-900">{result.red_flags}</li>}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                            <div className="pt-6 border-t border-gray-100">
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><i className="fa-solid fa-comment-dots text-vinted-500"></i> Anschreiben (Copy & Paste)</h3>
+                                                    <Button variant="ghost" size="sm" onClick={()=>{navigator.clipboard.writeText(result.negotiation_msg); addToast('Kopiert');}} icon="fa-copy">Kopieren</Button>
+                                                </div>
+                                                <div className="bg-white border-2 border-gray-100 p-6 rounded-2xl text-base font-medium text-gray-800 whitespace-pre-wrap shadow-inner-light">{result.negotiation_msg}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Card>
+                            )}
+                            {!result && !loading && (
+                                <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white/50 rounded-3xl border border-dashed border-gray-300">
+                                    <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-gray-300 text-5xl mb-6 shadow-sm border border-gray-100"><i className="fa-solid fa-scale-balanced"></i></div>
+                                    <p className="text-gray-500 font-semibold max-w-sm leading-relaxed">Die KI zerlegt jedes Angebot für dich. Lade Screenshots hoch, kalkuliere deine Marge und vermeide schlechte Deals.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- SNIPER ---
+        const Sniper = () => {
+            const { alerts, actions, addToast } = useAppContext();
+            const [brand, setBrand] = useState("");
+
+            const addAlert = () => {
+                if(!brand.trim()) return addToast("Bitte Suchbegriff eingeben", "warning");
+                actions.addAlert({ brand: brand.trim() });
+                setBrand("");
+                addToast("Suchauftrag angelegt!", "success");
+            };
+
+            const openVinted = (query) => {
+                if(!query) return;
+                window.open(`https://www.vinted.de/vetements?search_text=${encodeURIComponent(query)}&order=newest_first`, '_blank');
+            };
+
+            const openKleinanzeigen = (query) => {
+                if(!query) return;
+                window.open(`https://www.kleinanzeigen.de/s-sortierung:erstellungsdatum/${encodeURIComponent(query).replace(/%20/g, '-')}/k0`, '_blank');
+            };
+
+            return (
+                <div className="p-6 lg:p-12 max-w-5xl mx-auto h-full overflow-y-auto animate-fade-in pb-32">
+                    <div className="mb-10 animate-slide-in-right">
+                        <div className="flex items-center gap-4 mb-3">
+                            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Market Sniper</h1>
+                            <span className="bg-red-100 text-red-700 text-xs font-bold px-3 py-1.5 rounded-lg animate-pulse shadow-sm">LIVE LINKS</span>
+                        </div>
+                        <p className="text-gray-500 font-medium text-lg">Hinterlege Suchbegriffe. Ein Klick öffnet Vinted/Ebay – exakt gefiltert nach "Neueste zuerst". So bist du immer der Erste.</p>
+                    </div>
+
+                    <Card className="p-8 bg-gray-900 text-white mb-10 border-gray-800 shadow-floating animate-slide-up">
+                        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3"><i className="fa-solid fa-crosshairs text-red-500"></i> Neuen Radar Alert anlegen</h2>
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <input type="text" value={brand} onChange={e=>setBrand(e.target.value)} placeholder="z.B. Carhartt Detroit Jacket" className="flex-1 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-4 text-white placeholder-gray-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 outline-none text-base font-medium transition-all" />
+                            <Button variant="primary" onClick={addAlert} size="lg" className="!bg-red-600 hover:!bg-red-700 !border-red-500 shadow-lg shadow-red-500/20" icon="fa-plus">Alert Speichern</Button>
+                        </div>
+                    </Card>
+
+                    <div className="space-y-5">
+                        <h3 className="font-extrabold text-gray-900 text-xl mb-6">Deine aktiven Snipes</h3>
+                        {alerts.map((a, i) => {
+                            if(!a) return null;
+                            return (
+                                <Card key={a.id || i} className="p-6 flex flex-col sm:flex-row justify-between items-center gap-6 group animate-slide-up" style={{animationDelay: `${i*100}ms`}}>
+                                    <div className="flex items-center gap-4 w-full sm:w-auto min-w-0">
+                                        <div className="w-4 h-4 rounded-full bg-red-500 animate-pulse shrink-0 shadow-[0_0_10px_rgba(239,68,68,0.6)]"></div>
+                                        <p className="font-black text-xl text-gray-900 truncate">{a.brand}</p>
+                                    </div>
+                                    <div className="flex gap-3 w-full sm:w-auto shrink-0">
+                                        <Button onClick={()=>openVinted(a.brand)} className="flex-1 sm:flex-none !bg-vinted-50 hover:!bg-vinted-100 !text-vinted-700 !border-vinted-200" icon="fa-shirt">Vinted</Button>
+                                        <Button onClick={()=>openKleinanzeigen(a.brand)} className="flex-1 sm:flex-none !bg-green-50 hover:!bg-green-100 !text-green-700 !border-green-200" icon="fa-tag">Ebay</Button>
+                                        <Button onClick={()=>actions.deleteAlert(a.id)} className="!bg-gray-50 hover:!bg-red-50 !text-gray-400 hover:!text-red-500 !border-gray-200 hover:!border-red-200" icon="fa-trash"></Button>
+                                    </div>
+                                </Card>
+                            )
+                        })}
+                        {alerts.length === 0 && <EmptyState icon="fa-radar" title="Radar inaktiv" description="Lege Suchbegriffe an, um den Markt zu überwachen und als erster zuzuschlagen." />}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- SHIPPING ROUTE ---
+        const ShippingRoutePlanner = () => {
+            const { routeStops, actions, addToast } = useAppContext();
+            const [startLoc, setStartLoc] = useState("");
+            const [endLoc, setEndLoc] = useState("");
+
+            const addStop = (carrier) => {
+                actions.addRouteStop(carrier);
+                addToast(`${carrier} Halt hinzugefügt`, "success");
+            };
+
+            const openRoute = () => {
+                if(!startLoc.trim()) return addToast("Bitte Startpunkt eingeben", "warning");
+                if((routeStops||[]).length === 0) return addToast("Bitte füge Paketshops hinzu", "warning");
+
+                const origin = encodeURIComponent(startLoc);
+                const destination = endLoc.trim() ? encodeURIComponent(endLoc) : origin;
+                
+                const waypointsList = (routeStops||[]).filter(s=>s && s.carrier).map(s => encodeURIComponent(`${s.carrier} Paketshop`));
+                const waypointsStr = waypointsList.join('|');
+                
+                window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${waypointsStr}`, '_blank');
+                addToast("Google Maps wird geöffnet...", "success");
+            };
+
+            return (
+                <div className="p-6 lg:p-12 max-w-[1400px] mx-auto h-full flex flex-col animate-fade-in pb-32 overflow-y-auto">
+                    <datalist id="orte-vorschlaege">
+                        <option value="Winsen (Luhe)" /><option value="Winsen (Luhe) Bahnhof" /><option value="Lüneburg" /><option value="Hamburg" /><option value="Stelle" /><option value="Ashausen" /><option value="Pattensen" />
+                    </datalist>
+
+                    <div className="mb-10 animate-slide-in-right">
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Smart Routenplaner</h1>
+                        <p className="text-gray-500 mt-2 font-medium text-lg">Plane deine Fahrt, notiere Pakete und lass Google den besten Weg finden.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
+                        <div className="space-y-8 flex flex-col h-full animate-slide-up" style={{animationDelay: '100ms'}}>
+                            <Card className="p-8">
+                                <h2 className="text-xl font-extrabold text-gray-900 mb-6 border-b border-gray-100 pb-4 flex items-center gap-3"><div className="w-8 h-8 rounded-lg bg-vinted-100 text-vinted-600 flex items-center justify-center"><i className="fa-solid fa-map-pin"></i></div> 1. Wegpunkte</h2>
+                                <div className="space-y-5">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1">Startpunkt (Dein Standort)</label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><i className="fa-solid fa-location-dot"></i></div>
+                                            <input type="text" list="orte-vorschlaege" value={startLoc} onChange={e=>setStartLoc(e.target.value)} placeholder="Straße, Ort..." className="block w-full rounded-2xl border border-gray-200 bg-white/70 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 transition-all p-4 pl-12 sm:text-sm shadow-inner-light" />
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest pl-1">Zielpunkt (Optional)</label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><i className="fa-solid fa-flag-checkered"></i></div>
+                                            <input type="text" list="orte-vorschlaege" value={endLoc} onChange={e=>setEndLoc(e.target.value)} placeholder="Wenn abweichend vom Start..." className="block w-full rounded-2xl border border-gray-200 bg-white/70 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 transition-all p-4 pl-12 sm:text-sm shadow-inner-light" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+
+                            <Card className="p-8 flex-1 flex flex-col">
+                                <h2 className="text-xl font-extrabold text-gray-900 mb-6 border-b border-gray-100 pb-4 flex items-center gap-3"><div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i className="fa-solid fa-store"></i></div> 2. Shops hinzufügen</h2>
+                                
+                                <div className="flex flex-wrap gap-3 mb-8">
+                                    {VINTED_DATA.carriers.map(c => (
+                                        <button key={c} onClick={()=>addStop(c)} className="bg-white border-2 border-gray-200 hover:border-vinted-500 hover:bg-vinted-50 hover:text-vinted-700 px-5 py-2.5 rounded-xl text-sm font-bold text-gray-700 transition-all shadow-sm active:scale-95">
+                                            <i className="fa-solid fa-plus mr-1"></i> {c}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="flex-1 space-y-4 overflow-y-auto no-scrollbar pb-4 min-h-[250px]">
+                                    {(routeStops||[]).map((stop, i) => {
+                                        if(!stop) return null;
+                                        return (
+                                        <div key={stop.id||i} className="bg-white border-2 border-gray-100 rounded-2xl p-5 relative group hover:border-gray-200 transition-colors shadow-sm animate-slide-in-right">
+                                            <button onClick={()=>actions.deleteRouteStop(stop.id)} className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"><i className="fa-solid fa-trash text-sm"></i></button>
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="w-8 h-8 rounded-full bg-vinted-50 text-vinted-600 flex items-center justify-center font-black text-sm">{i+1}</div>
+                                                <h3 className="font-extrabold text-gray-900 text-lg">{stop.carrier} Shop</h3>
+                                            </div>
+                                            <textarea value={stop.notes} onChange={e => actions.updateRouteStop(stop.id, e.target.value)} placeholder={`Welche Pakete müssen hier hin?\nz.B. "Grauer Pulli an Max", "Sneaker an Anna"`} className="w-full bg-gray-50/80 border border-gray-200 rounded-xl p-4 text-sm resize-none outline-none focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 transition-all font-medium text-gray-700 shadow-inner-light" rows="3"></textarea>
+                                        </div>
+                                    )})}
+                                    {(routeStops||[]).length === 0 && (
+                                        <EmptyState icon="fa-route" title="Keine Haltepunkte" description="Klicke oben auf einen Dienstleister, um ihn zur Route hinzuzufügen." />
+                                    )}
+                                </div>
+
+                                <div className="pt-8 border-t border-gray-100 mt-auto flex gap-4">
+                                    <Button variant="secondary" onClick={actions.clearRoute} disabled={(routeStops||[]).length===0} className="px-6" title="Liste leeren" size="lg"><i className="fa-solid fa-trash-can"></i></Button>
+                                    <Button variant="vinted" onClick={openRoute} className="flex-1" size="lg" icon="fa-location-arrow">Maps Route starten</Button>
+                                </div>
+                            </Card>
+                        </div>
+
+                        <div className="animate-slide-up" style={{animationDelay: '200ms'}}>
+                            <Card className="p-10 bg-gray-900 text-white relative overflow-hidden h-full min-h-[500px] flex flex-col justify-center border-gray-800 shadow-floating">
+                                <i className="fa-solid fa-map-location-dot absolute -right-10 -bottom-10 text-[12rem] text-white/5 transform -rotate-12"></i>
+                                <h2 className="text-4xl font-extrabold mb-6 relative z-10 tracking-tight">Stressfreier Versand.</h2>
+                                <p className="text-gray-400 leading-relaxed text-base relative z-10 font-medium">
+                                    Dieser Routenplaner ist dein Logistik-Zentrum.<br/><br/>
+                                    <span className="text-vinted-400 font-bold block mb-3 text-lg">Dein Pro-Workflow:</span>
+                                    <span className="block mb-2"><strong className="text-white">1.</strong> Packe alle deine Bestellungen.</span>
+                                    <span className="block mb-2"><strong className="text-white">2.</strong> Füge für jeden Dienstleister (DHL, Hermes...) einen Halt hinzu.</span>
+                                    <span className="block mb-2"><strong className="text-white">3.</strong> Notiere dir im Textfeld, welches Paket bei welchem Shop abgegeben werden muss. So vertauschst du nie wieder Label!</span>
+                                    <span className="block"><strong className="text-white">4.</strong> Klicke auf Start. Google Maps baut dir automatisch die effizienteste Route.</span>
+                                </p>
+                            </Card>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- PROFIT TRACKER ---
+        const ProfitTracker = () => {
+            const { listings, actions } = useAppContext();
+            const sold = (listings||[]).filter(l => l && l.status === 'sold');
+            
+            // 1000% Sichere Rechnungen
+            const rev = sold.reduce((s, l) => s + parsePrice(l?.price), 0);
+            const cost = sold.reduce((s, l) => s + parsePrice(l?.buy_price), 0);
+            const profit = rev - cost;
+            const margin = rev > 0 ? ((profit / rev) * 100).toFixed(1) : 0;
+
+            return (
+                <div className="p-6 lg:p-12 max-w-7xl mx-auto h-full overflow-y-auto animate-fade-in pb-32">
+                    <div className="mb-10 animate-slide-in-right">
+                        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Kassenbuch</h1>
+                        <p className="text-gray-500 mt-2 font-medium text-lg">Detaillierte Finanzübersicht deiner Reselling-Aktivitäten.</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+                        <Card className="p-6 bg-white border border-gray-200 hover:-translate-y-1 transition-transform animate-slide-up" style={{animationDelay: '100ms'}}>
+                            <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Umsatz</p>
+                            <h3 className="text-3xl font-black text-gray-900">{rev.toFixed(2)} €</h3>
+                        </Card>
+                        <Card className="p-6 bg-white border border-gray-200 hover:-translate-y-1 transition-transform animate-slide-up" style={{animationDelay: '200ms'}}>
+                            <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Ausgaben</p>
+                            <h3 className="text-3xl font-black text-red-500">{cost.toFixed(2)} €</h3>
+                        </Card>
+                        <Card className="p-6 bg-white border border-gray-200 hover:-translate-y-1 transition-transform animate-slide-up" style={{animationDelay: '300ms'}}>
+                            <p className="text-[11px] font-extrabold text-gray-500 uppercase tracking-widest mb-2">Marge</p>
+                            <h3 className="text-3xl font-black text-vinted-600">{margin}%</h3>
+                        </Card>
+                        <Card className="p-6 bg-gray-900 text-white border border-gray-800 hover:-translate-y-1 transition-transform shadow-floating animate-slide-up" style={{animationDelay: '400ms'}}>
+                            <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">Netto-Gewinn</p>
+                            <h3 className="text-3xl font-black text-white">{profit.toFixed(2)} €</h3>
+                        </Card>
+                    </div>
+
+                    <Card noPadding className="animate-slide-up" style={{animationDelay: '500ms'}}>
+                        <div className="overflow-x-auto no-scrollbar">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-white border-b border-gray-100 shadow-xs">
+                                        <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Verkaufter Artikel</th>
+                                        <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Umsatz</th>
+                                        <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest w-48">Einkaufspreis</th>
+                                        <th className="px-8 py-5 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest text-right">Gewinn</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {sold.map((item, i) => {
+                                        if(!item) return null;
+                                        const p = parsePrice(item.price) - parsePrice(item.buy_price);
+                                        return (
+                                            <tr key={item.id||i} className="hover:bg-gray-50/80 transition-colors">
+                                                <td className="px-8 py-5 font-bold text-sm text-gray-900">{item.title || 'Artikel'}</td>
+                                                <td className="px-8 py-5 font-black text-sm text-gray-900">{parsePrice(item.price).toFixed(2)} €</td>
+                                                <td className="px-8 py-5">
+                                                    <div className="relative">
+                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">€</span>
+                                                        <input type="number" value={item.buy_price || ''} placeholder="0.00" onChange={e => actions.updateListing(item.id, { buy_price: e.target.value })} className="w-full pl-9 pr-3 py-2.5 text-sm font-bold border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-vinted-500 focus:ring-4 focus:ring-vinted-500/10 shadow-inner-light transition-all bg-gray-50" />
+                                                    </div>
+                                                </td>
+                                                <td className={`px-8 py-5 font-black text-base text-right ${p >= 0 ? 'text-green-600' : 'text-red-500'}`}>{p > 0 ? '+' : ''}{p.toFixed(2)} €</td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {sold.length === 0 && <tr><td colSpan="4"><EmptyState icon="fa-coins" title="Kasse leer" description="Markiere Artikel im Inventar als 'Verkauft', damit sie hier auftauchen." /></td></tr>}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+                </div>
+            );
+        };
+
+        // --- SMART REPLY ---
+        const SmartReply = () => {
+            const { addToast, settings } = useAppContext();
+            const [price, setPrice] = useState("");
+            const [date, setDate] = useState("morgen");
+            const [lang, setLang] = useState("DE");
+
+            const T = {
+                DE: {
+                    fav: `Moin! 👋\nFreut mich sehr, dass dir der Artikel gefällt. \nLass es mich gerne wissen, falls du noch weitere Infos oder Detailbilder brauchst, oder wenn wir über den Preis quatschen wollen.\n\n${settings?.signature || ''}`,
+                    low: `Moin! 👋\nDanke für dein Angebot. Für den Preis möchte ich es aktuell leider noch nicht abgeben.\nMeine absolute Schmerzgrenze läge bei [PREIS] €. Wäre das für dich auch noch okay?\n\n${settings?.signature || ''}`,
+                    bought: `Moin! 👋\nVielen Dank für deinen Kauf und das Vertrauen!\nDein Paket geht spätestens [DATUM] sicher verpackt auf die Reise. Ich melde mich kurz bei dir, sobald es bei der Post liegt.\n\n${settings?.signature || ''}`,
+                    sent: `Moin! 👋\nGute Nachrichten: Dein Paket ist auf dem Weg! Die Sendungsnummer (falls versichert) ist im System hinterlegt.\nSag mir gerne kurz Bescheid, wenn es gut angekommen ist.\n\n${settings?.signature || ''}`
+                },
+                EN: {
+                    fav: `Hi there! 👋\nSo glad you like the item. \nLet me know if you need any more details, pictures, or if you'd like to discuss the price.\n\n${settings?.signature || ''}`,
+                    low: `Hi! 👋\nThanks for your offer. I can't let it go for that price right now.\nMy absolute limit would be [PREIS] €. Would that still work for you?\n\n${settings?.signature || ''}`,
+                    bought: `Hi! 👋\nThank you so much for your purchase!\nYour package will be safely packed and shipped by [DATUM] at the latest. I'll let you know as soon as it's on the way.\n\n${settings?.signature || ''}`,
+                    sent: `Hi! 👋\nGood news: Your package is on its way! The tracking number (if insured) is updated in the system.\nPlease let me know when it arrives safely.\n\n${settings?.signature || ''}`
+                },
+                FR: {
+                    fav: `Salut ! 👋\nRavi que l'article te plaise. \nN'hésite pas si tu as besoin de plus d'infos, de photos, ou si tu veux discuter du prix.\n\n${settings?.signature || ''}`,
+                    low: `Salut ! 👋\nMerci pour ton offre. À ce prix, je préfère le garder pour le moment.\nMon dernier prix serait de [PREIS] €. Est-ce que ça t'irait ?\n\n${settings?.signature || ''}`,
+                    bought: `Salut ! 👋\nMerci beaucoup pour ton achat !\nTon colis sera bien emballé et expédié [DATUM] au plus tard. Je te préviens dès qu'il est en route.\n\n${settings?.signature || ''}`,
+                    sent: `Salut ! 👋\nBonne nouvelle : ton colis est en route ! Le numéro de suivi est dans le système.\nDis-moi quand tu l'auras bien reçu.\n\n${settings?.signature || ''}`
+                },
+                NL: {
+                    fav: `Hoi! 👋\nLeuk dat je het artikel mooi vindt. \nLaat het me weten als je meer info of foto's nodig hebt, of als je over de prijs wilt praten.\n\n${settings?.signature || ''}`,
+                    low: `Hoi! 👋\nBedankt voor je bod. Voor die prijs wil ik het momenteel nog niet wegdoen.\nMijn absolute bodemprijs is [PREIS] €. Zou dat ook goed voor je zijn?\n\n${settings?.signature || ''}`,
+                    bought: `Hoi! 👋\nHeel erg bedankt voor je aankoop!\nJe pakketje gaat uiterlijk [DATUM] veilig verpakt op de post. Ik stuur je een berichtje zodra het onderweg is.\n\n${settings?.signature || ''}`,
+                    sent: `Hoi! 👋\nGoed nieuws: je pakket is onderweg! Het trackingnummer staat in het systeem.\nLaat je me even weten als het goed is aangekomen?\n\n${settings?.signature || ''}`
+                }
+            };
+
+            const activeLang = T[lang];
+            const templates = [
+                { id: 'fav', icon: 'fa-heart text-red-500', bg: 'bg-red-50', title: 'Favorit / Interesse', text: activeLang.fav },
+                { id: 'low', icon: 'fa-arrow-trend-down text-orange-500', bg: 'bg-orange-50', title: 'Gegenangebot', hasPrice: true, text: activeLang.low },
+                { id: 'bought', icon: 'fa-bag-shopping text-vinted-500', bg: 'bg-vinted-50', title: 'Nach dem Kauf', hasDate: true, text: activeLang.bought },
+                { id: 'sent', icon: 'fa-truck-fast text-blue-500', bg: 'bg-blue-50', title: 'Paket verschickt', text: activeLang.sent },
+            ];
+
+            return (
+                <div className="p-6 lg:p-12 max-w-6xl mx-auto h-full overflow-y-auto animate-fade-in no-scrollbar pb-32">
+                    <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                        <div>
+                            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Smart Reply</h1>
+                            <p className="text-gray-500 mt-1 font-medium text-lg">Instant Antworten in 4 Sprachen. Null Wartezeit.</p>
+                        </div>
+                        <Card noPadding className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-gray-100 shadow-sm border border-gray-200">
+                            <div className="px-5 py-4 flex items-center gap-3 bg-white">
+                                <i className="fa-solid fa-euro-sign text-gray-400 text-sm"></i>
+                                <input type="number" placeholder="Preis (z.B. 15)" value={price} onChange={e=>setPrice(e.target.value)} className="outline-none font-bold text-sm w-20 text-gray-900 placeholder-gray-300" />
+                            </div>
+                            <div className="px-5 py-4 flex items-center gap-3 bg-white">
+                                <i className="fa-regular fa-calendar text-gray-400 text-sm"></i>
+                                <input type="text" placeholder="Tag (z.B. morgen)" value={date} onChange={e=>setDate(e.target.value)} className="outline-none font-bold text-sm w-28 text-gray-900 placeholder-gray-300" />
+                            </div>
+                            <div className="px-5 py-4 flex items-center gap-3 bg-gray-50 cursor-pointer relative hover:bg-gray-100 transition-colors">
+                                <i className="fa-solid fa-globe text-vinted-500 text-sm"></i>
+                                <select value={lang} onChange={e=>setLang(e.target.value)} className="appearance-none outline-none font-extrabold text-sm text-gray-900 cursor-pointer bg-transparent pr-4 w-28">
+                                    <option value="DE">Deutsch</option><option value="EN">English</option><option value="FR">Français</option><option value="NL">Nederlands</option>
+                                </select>
+                                <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 pointer-events-none"></i>
+                            </div>
+                        </Card>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {templates.map((tpl, i) => {
+                            let text = tpl.text;
+                            if(tpl.hasPrice) text = text.replace('[PREIS]', price || 'XX');
+                            if(tpl.hasDate) text = text.replace('[DATUM]', date || 'schnellstmöglich');
+                            return (
+                                <Card key={tpl.id} noPadding className="flex flex-col border border-gray-200 group hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 animate-slide-up" style={{animationDelay: `${i*100}ms`}}>
+                                    <div className="p-5 border-b border-gray-100 flex items-center gap-4 bg-white">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner-light border border-white ${tpl.bg}`}><i className={`fa-solid ${tpl.icon} text-xl`}></i></div>
+                                        <h3 className="font-extrabold text-gray-900 text-lg">{tpl.title}</h3>
+                                    </div>
+                                    <div className="p-8 flex-1 bg-gray-50/50"><p className="whitespace-pre-wrap text-base text-gray-700 font-medium leading-relaxed">{text}</p></div>
+                                    <div className="p-5 border-t border-gray-100 bg-white">
+                                        <Button variant="secondary" onClick={() => {navigator.clipboard.writeText(text); addToast("Kopiert!");}} className="w-full shadow-none group-hover:bg-gray-900 group-hover:text-white transition-colors border-transparent group-hover:border-gray-900" size="lg" icon="fa-copy">Text Kopieren</Button>
+                                    </div>
+                                </Card>
+                            )
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- SETTINGS (Mit Export / Import) ---
+        const Settings = () => {
+            const { settings, actions, addToast } = useAppContext();
+            const [localData, setLocalData] = useState(settings || {});
+
+            const save = () => { actions.updateSettings(localData); addToast("Einstellungen gespeichert"); };
+            const triggerFileSelect = () => document.getElementById('importFile').click();
+
+            const handleImport = (e) => {
+                const file = e.target.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const parsed = JSON.parse(e.target.result);
+                        actions.importData(parsed);
+                    } catch(err) {
+                        addToast("Die Datei ist beschädigt oder ungültig.", "error");
+                    }
+                };
+                reader.readAsText(file);
+            };
+
+            return (
+                <div className="p-6 lg:p-12 max-w-4xl mx-auto h-full overflow-y-auto animate-fade-in pb-32">
+                    <div className="mb-10 animate-slide-in-right">
+                        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Einstellungen</h1>
+                        <p className="text-gray-500 mt-2 font-medium text-lg">Personalisiere und sichere dein VintedPro System.</p>
+                    </div>
+
+                    <div className="space-y-8 animate-slide-up" style={{animationDelay: '100ms'}}>
+                        <Card className="p-8 md:p-10 border-t-4 border-t-vinted-500 shadow-sm">
+                            <h2 className="text-xl font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4"><i className="fa-solid fa-hard-drive text-vinted-500 mr-2"></i> Data Management (Backup)</h2>
+                            <p className="text-sm text-gray-500 mb-8 font-medium leading-relaxed">Da VintedPro alle Daten lokal in deinem Browser speichert, solltest du regelmäßig ein Backup erstellen. So kannst du deine Daten auf einen anderen PC übertragen oder vor Datenverlust schützen.</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-inner-light">
+                                    <h3 className="font-bold text-gray-900 mb-2">Daten Exportieren</h3>
+                                    <p className="text-xs text-gray-500 mb-4">Lade Inventar, Snipes und Routen als .json herunter.</p>
+                                    <Button onClick={actions.exportData} variant="primary" className="w-full" icon="fa-cloud-arrow-down">Backup erstellen</Button>
+                                </div>
+                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-inner-light">
+                                    <h3 className="font-bold text-gray-900 mb-2">Daten Importieren</h3>
+                                    <p className="text-xs text-gray-500 mb-4">Stelle das System aus einer alten .json Datei wieder her.</p>
+                                    <input type="file" id="importFile" accept=".json" className="hidden" onChange={handleImport} />
+                                    <Button onClick={triggerFileSelect} variant="secondary" className="w-full" icon="fa-cloud-arrow-up">Backup laden</Button>
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card className="p-8 md:p-10">
+                            <h2 className="text-xl font-bold text-gray-900 mb-8 border-b border-gray-100 pb-4"><i className="fa-solid fa-user text-vinted-500 mr-2"></i> Profil & Texte</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <Input label="Dein Vorname" value={localData.userName || ''} onChange={e=>setLocalData({...localData, userName: e.target.value})} icon="fa-user" />
+                                <Input label="Nachrichten-Signatur" value={localData.signature || ''} onChange={e=>setLocalData({...localData, signature: e.target.value})} icon="fa-pen-nib" />
+                            </div>
+                        </Card>
+                        
+                        <Card className="p-8 md:p-10">
+                            <h2 className="text-xl font-bold text-gray-900 mb-8 border-b border-gray-100 pb-4"><i className="fa-solid fa-microchip text-vinted-500 mr-2"></i> System (API)</h2>
+                            <div className="mb-6">
+                                <Input label="Google Gemini API Key" type="password" value={API_KEY} readOnly icon="fa-key" className="opacity-70 pointer-events-none" disabled />
+                            </div>
+                            <Select label="KI Modell (Priorität)" value={localData.apiModel || 'gemini-1.5-flash'} onChange={e=>setLocalData({...localData, apiModel: e.target.value})} options={['gemini-1.5-flash', 'gemini-flash-latest', 'gemini-1.5-pro']} icon="fa-server" />
+                            <div className="bg-blue-50/80 p-5 rounded-2xl border border-blue-100 flex gap-4 items-start mt-6 shadow-sm">
+                                <i className="fa-solid fa-shield-halved text-blue-600 mt-0.5 text-lg"></i>
+                                <p className="text-sm text-blue-900 leading-relaxed font-medium">Dein System testet automatisch Fallback-Modelle mit Exponential Backoff (Schutz vor API-Limits und Abstürzen).</p>
+                            </div>
+                        </Card>
+                        <div className="flex justify-end pt-4"><Button onClick={save} icon="fa-save" size="lg" className="px-10 shadow-lg">Einstellungen speichern</Button></div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // 5. MAIN APP LAYOUT
+        // ==========================================
+        const MainApp = () => {
+            const [view, setView] = useState('dashboard'); 
+            const [isSidebarOpen, setSidebarOpen] = useState(false);
+            const { settings } = useAppContext();
+
+            const menu = [
+                { id: 'dashboard', icon: 'fa-grip', label: 'Dashboard', component: <Dashboard setView={setView} /> },
+                { id: 'analyze', icon: 'fa-wand-magic-sparkles', label: 'Analyse Studio', component: <AnalyzeStudio /> },
+                { id: 'history', icon: 'fa-box-archive', label: 'Inventar', component: <Inventory setView={setView} /> },
+                { id: 'dealchecker', icon: 'fa-scale-balanced', label: 'Deal Checker Pro', component: <DealChecker /> },
+                { id: 'sniper', icon: 'fa-crosshairs', label: 'Sniper & Trends', component: <Sniper /> },
+                { id: 'smartreply', icon: 'fa-comment-dots', label: 'Smart Reply', component: <SmartReply /> },
+                { id: 'shipping', icon: 'fa-route', label: 'Routenplaner', component: <ShippingRoutePlanner /> },
+                { id: 'profit', icon: 'fa-chart-pie', label: 'Profit Tracker', component: <ProfitTracker /> },
+                { id: 'settings', icon: 'fa-gear', label: 'Einstellungen', component: <Settings /> },
+            ];
+
+            const activeMenu = menu.find(m => m.id === view);
+
+            return (
+                <div className="flex h-screen w-full overflow-hidden bg-transparent relative z-10">
+                    <div className={`fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 transition-opacity duration-400 lg:hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSidebarOpen(false)}></div>
+
+                    <aside className={`fixed lg:relative w-[280px] bg-white/80 backdrop-blur-2xl border-r border-white/50 h-full flex flex-col z-50 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${isSidebarOpen ? 'translate-x-0 shadow-[20px_0_50px_rgba(0,0,0,0.1)]' : '-translate-x-full lg:translate-x-0 lg:shadow-none'}`}>
+                        <div className="h-24 flex items-center px-8 border-b border-gray-200/50 shrink-0 bg-white relative z-10">
+                            <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center text-white shadow-md mr-4">
+                                <i className="fa-solid fa-shirt text-base"></i>
+                            </div>
+                            <span className="text-2xl font-extrabold text-gray-900 tracking-tight">Vinted<span className="text-vinted-600">Pro</span></span>
+                        </div>
+
+                        <nav className="flex-1 py-8 px-4 space-y-1.5 overflow-y-auto no-scrollbar relative z-0">
+                            <div className="px-4 mb-3 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Main Menu</div>
+                            {menu.slice(0, 3).map(item => (
+                                <button key={item.id} onClick={() => { setView(item.id); setSidebarOpen(false); }}
+                                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 font-bold text-sm group ${view === item.id ? 'bg-white text-vinted-600 shadow-sm border border-gray-100' : 'text-gray-500 hover:bg-white/50 hover:text-gray-900 border border-transparent'}`}>
+                                    <i className={`fa-solid ${item.icon} w-6 text-center text-lg ${view === item.id ? 'text-vinted-600' : 'text-gray-400 group-hover:scale-110 transition-transform'}`}></i>
+                                    {item.label}
+                                </button>
+                            ))}
+                            
+                            <div className="px-4 mt-8 mb-3 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Business Tools</div>
+                            {menu.slice(3).map(item => (
+                                <button key={item.id} onClick={() => { setView(item.id); setSidebarOpen(false); }}
+                                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 font-bold text-sm group ${view === item.id ? 'bg-white text-vinted-600 shadow-sm border border-gray-100' : 'text-gray-500 hover:bg-white/50 hover:text-gray-900 border border-transparent'}`}>
+                                    <i className={`fa-solid ${item.icon} w-6 text-center text-lg ${view === item.id ? 'text-vinted-600' : 'text-gray-400 group-hover:scale-110 transition-transform'}`}></i>
+                                    {item.label}
+                                </button>
+                            ))}
+                        </nav>
+                        
+                        <div className="p-6 border-t border-gray-200/50">
+                            <div className="flex items-center gap-4 bg-white/60 p-3 rounded-2xl border border-white shadow-sm cursor-pointer hover:bg-white transition-colors group" onClick={()=>setView('settings')}>
+                                <img src={`https://ui-avatars.com/api/?name=${settings?.userName || 'Rico'}&background=f3e8ff&color=9333ea&bold=true`} className="w-10 h-10 rounded-xl shadow-sm group-hover:scale-105 transition-transform" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-extrabold text-gray-900 truncate">{settings?.userName || 'Rico'}</p>
+                                    <p className="text-[10px] font-bold text-green-500 flex items-center gap-1.5"><i className="fa-solid fa-circle text-[6px] animate-pulse"></i> Pro Account</p>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <main className="flex-1 flex flex-col min-w-0 h-full relative z-0">
+                        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200/50 flex items-center justify-between px-4 shrink-0 lg:hidden z-20 shadow-sm">
+                            <button onClick={() => setSidebarOpen(true)} className="text-gray-600 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors"><i className="fa-solid fa-bars text-lg"></i></button>
+                            <span className="font-bold text-gray-900 text-sm">{activeMenu?.label}</span>
+                            <div className="w-10"></div>
+                        </header>
+
+                        <div className="flex-1 relative z-10 overflow-hidden">
+                            {activeMenu ? activeMenu.component : <Dashboard setView={setView} />}
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const RootApp = () => (
+            <ErrorBoundary>
+                <AppProvider>
+                    <MainApp />
+                </AppProvider>
+            </ErrorBoundary>
+        );
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<RootApp />);
+    </script>
+</body>
+</html>
